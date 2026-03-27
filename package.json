@@ -1,0 +1,8 @@
+{
+  "name": "netflix-redesign-prototype",
+  "version": "1.0.0",
+  "description": "Netflix UI Redesign Prototype - CEN 4721 HCI Assignment",
+  "scripts": {
+    "start": "npx serve ."
+  }
+}
