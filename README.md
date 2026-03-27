@@ -1,1 +1,1 @@
-# HCI-Project
+# HCI Group Project
