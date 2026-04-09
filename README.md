@@ -8,9 +8,10 @@ CEN 4721 — Human-Computer Interaction
    Drag and drop this folder into vercel.com/new
 
 ## Run Locally
-Open the Terminal and run the following: <br>
+Open the Terminal and clone the repo into a folder. Then, within the same terminal, run the following:
+
 ```
-cd [file path where you downloaded & extracted the zip file]
+cd [file path where you downloaded & extracted the zip file - if it is not the same file path you are currently in]
 npm ci
 npm run dev
 ```
