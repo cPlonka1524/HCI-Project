@@ -8,4 +8,11 @@ CEN 4721 — Human-Computer Interaction
    Drag and drop this folder into vercel.com/new
 
 ## Run Locally
-Open `index.html` directly in any browser — no server needed.
+Open the Terminal and run the following: <br>
+```
+cd [file path where you downloaded & extracted the zip file]
+npm ci
+npm run dev
+```
+
+Then click on the link displayed to open your browser onto https://localhost:5173/
