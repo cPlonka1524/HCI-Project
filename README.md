@@ -7,6 +7,7 @@ CEN 4721 — Human-Computer Interaction
    — OR —
    Drag and drop this folder into vercel.com/new
 
+
 ## Run Locally
 Open the Terminal and clone the repo into a folder. Then, within the same terminal, run the following:
 
