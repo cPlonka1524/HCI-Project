@@ -574,7 +574,15 @@ export default function App() {
           <>
             {activeTab === 'home' && (
               <>
-                <Hero item={featuredItem} onPlay={() => setPlayingItem(featuredItem)} onMoreInfo={() => setSelectedItem(featuredItem)} autoplayEnabled={autoplayEnabled} />
+                <Hero
+                  item={featuredItem}
+                  onPlay={() => setPlayingItem(featuredItem)}
+                  onMoreInfo={() => setSelectedItem(featuredItem)}
+                  autoplayEnabled={autoplayEnabled}
+                  onAddToList={addToList}
+                  onRemoveFromList={removeFromList}
+                  isInMyList={isInMyList}
+                />
                 <div className="px-4 md:px-8 pb-12 space-y-10 pt-8" style={{ background: 'var(--bg-primary)' }}>
                   <FilterBar
                     selectedGenre={selectedGenre}

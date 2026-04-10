@@ -1,6 +1,6 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
-import { X, Play, Pause, Volume2, VolumeX, SkipForward, Maximize, Minimize } from 'lucide-react';
-import { getVideoForItem } from '../utils/videoPool';
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
+import { X, Play, Pause, Volume2, VolumeX, SkipForward, Maximize, Minimize, Loader } from 'lucide-react';
+import { getVideoForItem, fallbackVideos } from '../utils/videoPool';
 import type { ContentItem } from '../types';
 
 interface PlayScreenProps {
@@ -21,27 +21,43 @@ export function PlayScreen({ item, onClose }: PlayScreenProps) {
   const [duration, setDuration] = useState(0);
   const [showControls, setShowControls] = useState(true);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [urlIndex, setUrlIndex] = useState(0);
+
+  const videoUrls = useMemo(() => [
+    getVideoForItem(item.id),
+    ...fallbackVideos,
+  ], [item.id]);
+
+  const currentVideoUrl = videoUrls[urlIndex];
+
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const controlsTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const setVideo = useCallback((el: HTMLVideoElement | null) => {
+  const setVideoRef = useCallback((el: HTMLVideoElement | null) => {
     videoRef.current = el;
     if (el) {
-      el.play().then(() => setIsPlaying(true)).catch(() => {});
+      el.muted = false;
+      el.play().then(() => setIsPlaying(true)).catch(() => {
+        // If unmuted autoplay is blocked, try muted
+        el.muted = true;
+        setIsMuted(true);
+        el.play().then(() => setIsPlaying(true)).catch(() => {});
+      });
     }
   }, []);
 
-  const resetControlsTimer = () => {
+  const resetControlsTimer = useCallback(() => {
     setShowControls(true);
     if (controlsTimer.current) clearTimeout(controlsTimer.current);
     controlsTimer.current = setTimeout(() => setShowControls(false), 3000);
-  };
+  }, []);
 
   useEffect(() => {
     resetControlsTimer();
     return () => { if (controlsTimer.current) clearTimeout(controlsTimer.current); };
-  }, []);
+  }, [resetControlsTimer]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -100,6 +116,12 @@ export function PlayScreen({ item, onClose }: PlayScreenProps) {
     }
   };
 
+  const handleVideoError = () => {
+    if (urlIndex < videoUrls.length - 1) {
+      setUrlIndex(i => i + 1);
+    }
+  };
+
   const progressPercent = duration > 0 ? (currentTime / duration) * 100 : 0;
 
   return (
@@ -112,35 +134,63 @@ export function PlayScreen({ item, onClose }: PlayScreenProps) {
       aria-modal="true"
       aria-label={`Playing ${item.title}`}
     >
-      {/* Video */}
+      {/* Video — key forces remount on URL change for reliable fallback cycling */}
       <video
-        ref={setVideo}
-        src={getVideoForItem(item.id)}
+        key={currentVideoUrl}
+        ref={setVideoRef}
+        src={currentVideoUrl}
+        poster={item.thumbnail}
         className="w-full h-full object-contain"
+        onWaiting={() => setIsLoading(true)}
+        onCanPlay={e => {
+          setIsLoading(false);
+          e.currentTarget.play().catch(() => {});
+        }}
+        onPlaying={() => { setIsLoading(false); setIsPlaying(true); }}
         onTimeUpdate={e => setCurrentTime(e.currentTarget.currentTime)}
         onLoadedMetadata={e => setDuration(e.currentTarget.duration)}
         onEnded={() => setIsPlaying(false)}
         onPlay={() => setIsPlaying(true)}
         onPause={() => setIsPlaying(false)}
+        onError={handleVideoError}
         aria-label={`Video player for ${item.title}`}
       />
 
-      {/* Controls overlay */}
+      {/* Loading spinner — shown while video buffers */}
+      {isLoading && (
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <Loader size={48} className="text-white animate-spin opacity-80" aria-label="Loading video" />
+        </div>
+      )}
+
+      {/* Click-to-pause — rendered BEFORE controls overlay so controls stay on top */}
+      <button
+        onClick={e => { e.stopPropagation(); togglePlay(); }}
+        className="absolute inset-0 w-full h-full focus-visible:outline-none"
+        aria-label={isPlaying ? 'Pause' : 'Play'}
+        tabIndex={-1}
+        style={{ background: 'transparent' }}
+      />
+
+      {/* Controls overlay — pointer-events-none on wrapper, re-enabled on children */}
       <div
-        className="absolute inset-0 flex flex-col justify-between transition-opacity duration-300"
-        style={{ opacity: showControls ? 1 : 0, background: 'linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 40%, rgba(0,0,0,0.4) 100%)' }}
+        className="absolute inset-0 flex flex-col justify-between transition-opacity duration-300 pointer-events-none"
+        style={{
+          opacity: showControls ? 1 : 0,
+          background: 'linear-gradient(to top, rgba(0,0,0,0.85) 0%, transparent 40%, rgba(0,0,0,0.5) 100%)',
+        }}
         aria-hidden={!showControls}
       >
         {/* Top bar */}
-        <div className="flex items-center justify-between p-4 md:p-6">
+        <div className="flex items-center justify-between p-4 md:p-6 pointer-events-auto">
           <div>
             <h1 className="text-white font-bold text-lg">{item.title}</h1>
             <p className="text-white/70 text-sm">{item.year} · {item.genre}</p>
           </div>
           <button
-            onClick={onClose}
+            onClick={e => { e.stopPropagation(); onClose(); }}
             className="p-2 rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
-            style={{ background: 'rgba(0,0,0,0.5)' }}
+            style={{ background: 'rgba(0,0,0,0.6)' }}
             aria-label="Exit player"
           >
             <X size={22} className="text-white" aria-hidden="true" />
@@ -148,13 +198,13 @@ export function PlayScreen({ item, onClose }: PlayScreenProps) {
         </div>
 
         {/* Bottom controls */}
-        <div className="p-4 md:p-6 space-y-3">
+        <div className="p-4 md:p-6 space-y-3 pointer-events-auto">
           {/* Seek bar */}
           <div className="flex items-center gap-3">
-            <span className="text-white text-xs tabular-nums">{formatTime(currentTime)}</span>
+            <span className="text-white text-xs tabular-nums w-10 text-right">{formatTime(currentTime)}</span>
             <div className="flex-1 relative h-1 group">
               <div className="w-full h-1 rounded-full" style={{ background: 'rgba(255,255,255,0.3)' }}>
-                <div className="h-full rounded-full" style={{ width: `${progressPercent}%`, background: 'var(--accent)' }} />
+                <div className="h-full rounded-full transition-all" style={{ width: `${progressPercent}%`, background: 'var(--accent)' }} />
               </div>
               <input
                 type="range"
@@ -163,18 +213,19 @@ export function PlayScreen({ item, onClose }: PlayScreenProps) {
                 step={0.5}
                 value={currentTime}
                 onChange={handleSeek}
+                onClick={e => e.stopPropagation()}
                 className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                 aria-label="Video progress"
                 aria-valuetext={`${formatTime(currentTime)} of ${formatTime(duration)}`}
               />
             </div>
-            <span className="text-white text-xs tabular-nums">{formatTime(duration)}</span>
+            <span className="text-white text-xs tabular-nums w-10">{formatTime(duration)}</span>
           </div>
 
           {/* Buttons */}
           <div className="flex items-center gap-3">
             <button
-              onClick={togglePlay}
+              onClick={e => { e.stopPropagation(); togglePlay(); }}
               className="p-2 rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
               style={{ background: 'rgba(255,255,255,0.2)' }}
               aria-label={isPlaying ? 'Pause' : 'Play'}
@@ -186,7 +237,7 @@ export function PlayScreen({ item, onClose }: PlayScreenProps) {
             </button>
 
             <button
-              onClick={skipForward}
+              onClick={e => { e.stopPropagation(); skipForward(); }}
               className="p-2 rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
               style={{ background: 'rgba(255,255,255,0.2)' }}
               aria-label="Skip forward 10 seconds"
@@ -195,7 +246,7 @@ export function PlayScreen({ item, onClose }: PlayScreenProps) {
             </button>
 
             <button
-              onClick={toggleMute}
+              onClick={e => { e.stopPropagation(); toggleMute(); }}
               className="p-2 rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
               style={{ background: 'rgba(255,255,255,0.2)' }}
               aria-label={isMuted ? 'Unmute' : 'Mute'}
@@ -209,11 +260,10 @@ export function PlayScreen({ item, onClose }: PlayScreenProps) {
 
             <div className="flex-1" />
 
-            {/* Keyboard hints */}
             <span className="text-white/50 text-xs hidden md:block">Space · M · Esc</span>
 
             <button
-              onClick={toggleFullscreen}
+              onClick={e => { e.stopPropagation(); toggleFullscreen(); }}
               className="p-2 rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
               style={{ background: 'rgba(255,255,255,0.2)' }}
               aria-label={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
@@ -227,15 +277,6 @@ export function PlayScreen({ item, onClose }: PlayScreenProps) {
           </div>
         </div>
       </div>
-
-      {/* Click to play/pause */}
-      <button
-        onClick={togglePlay}
-        className="absolute inset-0 w-full h-full focus-visible:outline-none"
-        aria-label={isPlaying ? 'Pause' : 'Play'}
-        tabIndex={-1}
-        style={{ background: 'transparent' }}
-      />
     </div>
   );
 }

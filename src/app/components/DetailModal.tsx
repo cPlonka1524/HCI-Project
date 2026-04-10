@@ -124,7 +124,15 @@ export function DetailModal({
         >
           {/* Video / Hero */}
           <div className="relative aspect-video bg-black">
-            {autoplayEnabled && !videoError ? (
+            {/* Thumbnail always shown as base — prevents black screen while video loads */}
+            <ImageWithFallback
+              src={item.thumbnail}
+              alt={`Cover image for ${item.title}`}
+              className="absolute inset-0 w-full h-full object-cover"
+            />
+
+            {/* Video overlaid on top — pointer-events:none so it never blocks button clicks */}
+            {autoplayEnabled && !videoError && (
               <video
                 key={currentVideoUrl}
                 ref={setVideoRef}
@@ -133,8 +141,8 @@ export function DetailModal({
                 loop
                 playsInline
                 preload="auto"
-                poster={item.thumbnail}
-                className="w-full h-full object-cover"
+                className="absolute inset-0 w-full h-full object-cover"
+                style={{ pointerEvents: 'none' }}
                 onCanPlay={e => {
                   e.currentTarget.muted = true;
                   e.currentTarget.play().catch(() => {});
@@ -142,15 +150,9 @@ export function DetailModal({
                 onError={handleVideoError}
                 aria-label={`Preview video for ${item.title}`}
               />
-            ) : (
-              <ImageWithFallback
-                src={item.thumbnail}
-                alt={`Cover image for ${item.title}`}
-                className="w-full h-full object-cover"
-              />
             )}
 
-            <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" aria-hidden="true" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent pointer-events-none" aria-hidden="true" />
 
             {/* Close */}
             <button
@@ -193,7 +195,7 @@ export function DetailModal({
 
               <div className="flex items-center gap-3" role="group" aria-label="Title actions">
                 <button
-                  onClick={() => onPlayClick(item)}
+                  onClick={e => { e.stopPropagation(); onPlayClick(item); }}
                   className="flex items-center gap-2 px-6 py-2.5 rounded font-bold text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
                   style={{ background: '#ffffff', color: '#000000' }}
                   aria-label={`Play ${item.title}`}
@@ -202,7 +204,7 @@ export function DetailModal({
                   Play
                 </button>
                 <button
-                  onClick={() => inList ? onRemoveFromList(item.id) : onAddToList(item)}
+                  onClick={e => { e.stopPropagation(); inList ? onRemoveFromList(item.id) : onAddToList(item); }}
                   className="p-2.5 rounded-full border-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
                   style={{ background: 'rgba(42,42,42,0.8)', borderColor: 'rgba(100,100,100,0.6)', color: '#fff' }}
                   aria-label={inList ? `Remove ${item.title} from My List` : `Add ${item.title} to My List`}
@@ -211,6 +213,7 @@ export function DetailModal({
                   {inList ? <Check size={18} aria-hidden="true" /> : <Plus size={18} aria-hidden="true" />}
                 </button>
                 <button
+                  onClick={e => e.stopPropagation()}
                   className="p-2.5 rounded-full border-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
                   style={{ background: 'rgba(42,42,42,0.8)', borderColor: 'rgba(100,100,100,0.6)', color: '#fff' }}
                   aria-label={`Like ${item.title}`}

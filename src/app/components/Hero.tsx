@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback } from 'react';
-import { Play, Info, Plus, Volume2, VolumeX } from 'lucide-react';
+import { Play, Info, Plus, Check, Volume2, VolumeX } from 'lucide-react';
 import { ImageWithFallback } from './figma/ImageWithFallback';
 import { getVideoForItem, fallbackVideos } from '../utils/videoPool';
 import type { ContentItem } from '../types';
@@ -9,9 +9,13 @@ interface HeroProps {
   onPlay: () => void;
   onMoreInfo: () => void;
   autoplayEnabled: boolean;
+  onAddToList: (item: ContentItem) => void;
+  onRemoveFromList: (itemId: string) => void;
+  isInMyList: (itemId: string) => boolean;
 }
 
-export function Hero({ item, onPlay, onMoreInfo, autoplayEnabled }: HeroProps) {
+export function Hero({ item, onPlay, onMoreInfo, autoplayEnabled, onAddToList, onRemoveFromList, isInMyList }: HeroProps) {
+  const inList = isInMyList(item.id);
   const [isMuted, setIsMuted] = useState(true);
   const [videoError, setVideoError] = useState(false);
   const [urlIndex, setUrlIndex] = useState(0);
@@ -40,8 +44,13 @@ export function Hero({ item, onPlay, onMoreInfo, autoplayEnabled }: HeroProps) {
 
   return (
     <div className="relative w-full" style={{ height: 'min(70vh, 480px)', marginTop: '56px' }}>
-      {/* Background: video or image */}
-      {showVideo ? (
+      {/* Background: thumbnail always shown, video overlaid on top */}
+      <ImageWithFallback
+        src={item.thumbnail}
+        alt=""
+        className="absolute inset-0 w-full h-full object-cover"
+      />
+      {showVideo && (
         <video
           key={currentVideoUrl}
           ref={setVideoRef}
@@ -50,20 +59,14 @@ export function Hero({ item, onPlay, onMoreInfo, autoplayEnabled }: HeroProps) {
           loop
           playsInline
           preload="auto"
-          poster={item.thumbnail}
-          className="w-full h-full object-cover"
+          className="absolute inset-0 w-full h-full object-cover"
+          style={{ pointerEvents: 'none' }}
           onCanPlay={e => {
             e.currentTarget.muted = true;
             e.currentTarget.play().catch(() => {});
           }}
           onError={handleVideoError}
           aria-label={`Trailer for ${item.title}`}
-        />
-      ) : (
-        <ImageWithFallback
-          src={item.thumbnail}
-          alt=""
-          className="w-full h-full object-cover"
         />
       )}
 
@@ -149,11 +152,13 @@ export function Hero({ item, onPlay, onMoreInfo, autoplayEnabled }: HeroProps) {
             </button>
 
             <button
+              onClick={() => inList ? onRemoveFromList(item.id) : onAddToList(item)}
               className="p-2.5 rounded-full border-2 transition-colors hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
               style={{ background: 'rgba(42,42,42,0.8)', borderColor: 'rgba(255,255,255,0.5)', color: '#fff' }}
-              aria-label={`Add ${item.title} to My List`}
+              aria-label={inList ? `Remove ${item.title} from My List` : `Add ${item.title} to My List`}
+              aria-pressed={inList}
             >
-              <Plus size={20} aria-hidden="true" />
+              {inList ? <Check size={20} aria-hidden="true" /> : <Plus size={20} aria-hidden="true" />}
             </button>
           </div>
         </div>
