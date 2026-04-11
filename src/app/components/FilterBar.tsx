@@ -1,6 +1,6 @@
 import { LayoutGrid, List } from 'lucide-react';
 
-const GENRES = ['All', 'Action', 'Sci-Fi', 'Drama', 'Thriller', 'Comedy'] as const;
+const GENRES = ['All', 'Action', 'Sci-Fi', 'Drama', 'Thriller', 'Comedy', 'Animation', 'Fantasy'] as const;
 type Genre = typeof GENRES[number];
 type SortOption = 'recommended' | 'newest' | 'top-rated';
 

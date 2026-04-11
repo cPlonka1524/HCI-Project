@@ -223,10 +223,10 @@ export function PlayScreen({ item, onClose }: PlayScreenProps) {
           </div>
 
           {/* Buttons */}
-          <div className="flex items-center gap-3">
+          <div className="relative flex items-center gap-3">
             <button
               onClick={e => { e.stopPropagation(); togglePlay(); }}
-              className="p-2 rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+              className="absolute left-1/2 z-10 -translate-x-1/2 p-2 rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
               style={{ background: 'rgba(255,255,255,0.2)' }}
               aria-label={isPlaying ? 'Pause' : 'Play'}
             >

@@ -25,6 +25,7 @@ export interface ContentItem {
   year: number;
   rating?: number;
   thumbnail: string;
+  videoSrc?: string;
   description?: string;
   director?: string;
   cast?: CastMember[];

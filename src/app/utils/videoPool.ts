@@ -1,3 +1,5 @@
+import { localAssetVideoMap } from './localAssets';
+
 // Public-domain / CC0 video URLs for trailer simulation.
 // All from Google's GTV sample bucket (CORS-friendly) and MDN.
 export const videoPool = [
@@ -25,6 +27,8 @@ export const fallbackVideos = [
 
 // Deterministic hash so each item always gets the same video.
 export function getVideoForItem(itemId: string): string {
+  const localVideo = localAssetVideoMap[itemId];
+  if (localVideo) return localVideo;
   const hash = itemId.split('').reduce((acc, char) => ((acc << 5) - acc) + char.charCodeAt(0), 0);
   return videoPool[Math.abs(hash) % videoPool.length];
 }

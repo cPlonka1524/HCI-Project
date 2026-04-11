@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { LayoutGrid, List } from 'lucide-react';
 import { Navbar } from './components/Navbar';
 import { Hero } from './components/Hero';
 import { ContinueWatching } from './components/ContinueWatching';
@@ -8,6 +9,7 @@ import { DetailModal } from './components/DetailModal';
 import { SearchResults } from './components/SearchResults';
 import { PlayScreen } from './components/PlayScreen';
 import type { ContentItem, WatchProgress } from './types';
+import { LOCAL_ASSET_CONTENT } from './utils/localAssets';
 
 // ── Mock Content Data ────────────────────────────────────────────────────────
 
@@ -409,7 +411,9 @@ const SERIES: ContentItem[] = [
   },
 ];
 
-export const ALL_CONTENT: ContentItem[] = [...MOVIES, ...SERIES];
+const LIBRARY_MOVIES: ContentItem[] = [...LOCAL_ASSET_CONTENT, ...MOVIES];
+
+export const ALL_CONTENT: ContentItem[] = [...LIBRARY_MOVIES, ...SERIES];
 
 const CONTINUE_WATCHING = [
   { itemId: 'ser-1', progress: 65, episode: 'S2:E3', season: 2, episodeNum: 3 },
@@ -421,7 +425,7 @@ const CONTINUE_WATCHING = [
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
 type SortOption = 'recommended' | 'newest' | 'top-rated';
-type Genre = 'All' | 'Action' | 'Sci-Fi' | 'Drama' | 'Thriller' | 'Comedy';
+type Genre = 'All' | 'Action' | 'Sci-Fi' | 'Drama' | 'Thriller' | 'Comedy' | 'Animation' | 'Fantasy';
 
 const deduped = (items: ContentItem[]): ContentItem[] => {
   const seenIds = new Set<string>();
@@ -463,6 +467,7 @@ export default function App() {
   const [selectedItem, setSelectedItem] = useState<ContentItem | null>(null);
   const [playingItem, setPlayingItem] = useState<ContentItem | null>(null);
   const [myList, setMyList] = useState<ContentItem[]>([]);
+  const [continueWatchingItems, setContinueWatchingItems] = useState<WatchProgress[]>(CONTINUE_WATCHING);
   const [searchQuery, setSearchQuery] = useState('');
   const [autoplayEnabled, setAutoplayEnabled] = useState(true);
   const [selectedGenre, setSelectedGenre] = useState<Genre>('All');
@@ -474,6 +479,34 @@ export default function App() {
     if (!isInMyList(item.id)) setMyList(prev => [...prev, item]);
   };
   const removeFromList = (id: string) => setMyList(prev => prev.filter(i => i.id !== id));
+
+  const addToContinueWatching = (item: ContentItem, progress = 5) => {
+    setContinueWatchingItems(prev => {
+      const existing = prev.find(entry => entry.itemId === item.id);
+      const nextEntry: WatchProgress = {
+        itemId: item.id,
+        progress: existing ? Math.max(existing.progress, progress) : progress,
+        episode: item.type === 'series' ? (existing?.episode ?? 'S1:E1') : undefined,
+        season: item.type === 'series' ? (existing?.season ?? 1) : undefined,
+        episodeNum: item.type === 'series' ? (existing?.episodeNum ?? 1) : undefined,
+      };
+
+      return [
+        nextEntry,
+        ...prev.filter(entry => entry.itemId !== item.id),
+      ].slice(0, 12);
+    });
+  };
+
+  const handleItemClick = (item: ContentItem) => {
+    addToContinueWatching(item);
+    setSelectedItem(item);
+  };
+
+  const handlePlayClick = (item: ContentItem) => {
+    addToContinueWatching(item, 10);
+    setPlayingItem(item);
+  };
 
   const handleTabChange = (tab: typeof activeTab) => {
     setActiveTab(tab);
@@ -511,6 +544,8 @@ export default function App() {
     ).slice(0, 12);
   }, [selectedGenre, sortOption, trendingNow]);
 
+  const localAssetsRow = useMemo(() => LOCAL_ASSET_CONTENT.slice(0, 18), []);
+
   const topRated = useMemo(() => {
     const usedIds = new Set([
       ALL_CONTENT[0].id,
@@ -525,22 +560,21 @@ export default function App() {
 
   // Tab-specific lists
   const moviesFiltered = useMemo(() =>
-    deduped(sortItems(filterByGenre(MOVIES, selectedGenre), sortOption)),
+    deduped(sortItems(filterByGenre(LIBRARY_MOVIES, selectedGenre), sortOption)),
   [selectedGenre, sortOption]);
 
   const seriesFiltered = useMemo(() =>
     deduped(sortItems(filterByGenre(SERIES, selectedGenre), sortOption)),
   [selectedGenre, sortOption]);
 
-  const featuredItem = ALL_CONTENT[0];
-  const continueWatchingItems: WatchProgress[] = CONTINUE_WATCHING;
+  const featuredItem = MOVIES[0];
 
   const commonProps = {
-    onItemClick: setSelectedItem,
+    onItemClick: handleItemClick,
     onAddToList: addToList,
     onRemoveFromList: removeFromList,
     isInMyList,
-    onPlayClick: setPlayingItem,
+    onPlayClick: handlePlayClick,
     autoplayEnabled,
     viewMode,
   };
@@ -576,29 +610,49 @@ export default function App() {
               <>
                 <Hero
                   item={featuredItem}
-                  onPlay={() => setPlayingItem(featuredItem)}
-                  onMoreInfo={() => setSelectedItem(featuredItem)}
+                  onPlay={() => handlePlayClick(featuredItem)}
+                  onMoreInfo={() => handleItemClick(featuredItem)}
                   autoplayEnabled={autoplayEnabled}
                   onAddToList={addToList}
                   onRemoveFromList={removeFromList}
                   isInMyList={isInMyList}
                 />
                 <div className="px-4 md:px-8 pb-12 space-y-10 pt-8" style={{ background: 'var(--bg-primary)' }}>
-                  <FilterBar
-                    selectedGenre={selectedGenre}
-                    onGenreChange={g => setSelectedGenre(g as Genre)}
-                    sortOption={sortOption}
-                    onSortChange={s => setSortOption(s as SortOption)}
-                    viewMode={viewMode}
-                    onViewModeChange={setViewMode}
-                    resultCount={recommendedForYou.length}
-                  />
+                  <div className="flex justify-end">
+                    <div role="group" aria-label="Home view mode" className="flex gap-1">
+                      <button
+                        onClick={() => setViewMode('grid')}
+                        aria-pressed={viewMode === 'grid'}
+                        aria-label="Grid view"
+                        className="p-1.5 rounded transition-colors focus-visible:outline-none focus-visible:ring-2"
+                        style={viewMode === 'grid'
+                          ? { background: 'var(--chip-active-bg)', color: 'var(--chip-active-text)', '--tw-ring-color': 'var(--border-focus)' } as React.CSSProperties
+                          : { background: 'transparent', color: 'var(--text-muted)', '--tw-ring-color': 'var(--border-focus)' } as React.CSSProperties
+                        }
+                      >
+                        <LayoutGrid size={16} aria-hidden="true" />
+                      </button>
+                      <button
+                        onClick={() => setViewMode('list')}
+                        aria-pressed={viewMode === 'list'}
+                        aria-label="List view"
+                        className="p-1.5 rounded transition-colors focus-visible:outline-none focus-visible:ring-2"
+                        style={viewMode === 'list'
+                          ? { background: 'var(--chip-active-bg)', color: 'var(--chip-active-text)', '--tw-ring-color': 'var(--border-focus)' } as React.CSSProperties
+                          : { background: 'transparent', color: 'var(--text-muted)', '--tw-ring-color': 'var(--border-focus)' } as React.CSSProperties
+                        }
+                      >
+                        <List size={16} aria-hidden="true" />
+                      </button>
+                    </div>
+                  </div>
                   <ContinueWatching
                     items={continueWatchingItems}
                     allContent={ALL_CONTENT}
-                    onItemClick={setSelectedItem}
-                    onPlayClick={setPlayingItem}
+                    onItemClick={handleItemClick}
+                    onPlayClick={handlePlayClick}
                   />
+                  <ContentSection title="Your Favorites" items={localAssetsRow} {...commonProps} />
                   <ContentSection title="Trending Now" items={trendingNow} {...commonProps} />
                   <ContentSection title="Recommended For You" items={recommendedForYou} {...commonProps} viewMode={viewMode} />
                   <ContentSection title="Top Rated" items={topRated} {...commonProps} />
@@ -665,8 +719,8 @@ export default function App() {
         onRemoveFromList={removeFromList}
         isInMyList={isInMyList}
         moreLikeThis={getMoreLikeThis(selectedItem)}
-        onItemClick={setSelectedItem}
-        onPlayClick={setPlayingItem}
+        onItemClick={handleItemClick}
+        onPlayClick={handlePlayClick}
         autoplayEnabled={autoplayEnabled}
       />
 
