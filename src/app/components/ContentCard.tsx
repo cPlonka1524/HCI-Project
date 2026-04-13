@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useMemo } from 'react';
-import { Play, Plus, Check, ChevronDown, Volume2, VolumeX } from 'lucide-react';
+import { Play, Plus, Check, ChevronDown, Volume2, VolumeX, ThumbsDown } from 'lucide-react';
 import { ImageWithFallback } from './figma/ImageWithFallback';
 import { getVideoForItem, fallbackVideos } from '../utils/videoPool';
 import type { ContentItem } from '../types';
@@ -12,10 +12,11 @@ interface ContentCardProps {
   isInMyList: (itemId: string) => boolean;
   onPlayClick: (item: ContentItem) => void;
   autoplayEnabled: boolean;
+  onDismiss?: (itemId: string) => void;
 }
 
 export function ContentCard({
-  item, onItemClick, onAddToList, onRemoveFromList, isInMyList, onPlayClick, autoplayEnabled,
+  item, onItemClick, onAddToList, onRemoveFromList, isInMyList, onPlayClick, autoplayEnabled, onDismiss,
 }: ContentCardProps) {
   const [hovered, setHovered] = useState(false);
   const [isMuted, setIsMuted] = useState(true);
@@ -82,6 +83,9 @@ export function ContentCard({
         <div className="mt-1.5 px-0.5">
           <p className="text-xs font-medium line-clamp-1 theme-transition" style={{ color: 'var(--text-primary)' }}>{item.title}</p>
           <p className="text-xs theme-transition" style={{ color: 'var(--text-muted)' }}>{item.year} · {item.genre}</p>
+          {item.reason && (
+            <p className="text-xs mt-0.5 line-clamp-1 italic" style={{ color: 'var(--reason-text, #46d369)' }}>↗ {item.reason}</p>
+          )}
         </div>
       </button>
 
@@ -175,6 +179,18 @@ export function ContentCard({
               >
                 {inList ? <Check size={14} aria-hidden="true" /> : <Plus size={14} aria-hidden="true" />}
               </button>
+
+              {onDismiss && (
+                <button
+                  onClick={e => { e.stopPropagation(); onDismiss(item.id); }}
+                  className="w-8 h-8 rounded-full border-2 flex items-center justify-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+                  style={{ borderColor: 'rgba(255,255,255,0.5)', color: '#fff', background: 'rgba(42,42,42,0.8)' }}
+                  aria-label={`Not interested in ${item.title}`}
+                  title="Not interested"
+                >
+                  <ThumbsDown size={14} aria-hidden="true" />
+                </button>
+              )}
 
               <button
                 onClick={e => { e.stopPropagation(); onItemClick(item); }}

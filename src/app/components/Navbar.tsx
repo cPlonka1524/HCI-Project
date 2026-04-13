@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { Search, X, Sun, Moon, User } from 'lucide-react';
 import { useTheme } from '../ThemeContext';
 
@@ -9,6 +9,7 @@ interface NavbarProps {
   onSearchChange: (q: string) => void;
   autoplayEnabled: boolean;
   onAutoplayToggle: () => void;
+  myListCount: number;
 }
 
 const TABS = [
@@ -18,7 +19,7 @@ const TABS = [
   { id: 'mylist' as const, label: 'My List' },
 ];
 
-export function Navbar({ activeTab, onTabChange, searchQuery, onSearchChange, autoplayEnabled, onAutoplayToggle }: NavbarProps) {
+export function Navbar({ activeTab, onTabChange, searchQuery, onSearchChange, autoplayEnabled, onAutoplayToggle, myListCount }: NavbarProps) {
   const [searchOpen, setSearchOpen] = useState(false);
   const searchRef = useRef<HTMLInputElement>(null);
   const { theme, toggleTheme } = useTheme();
@@ -29,10 +30,23 @@ export function Navbar({ activeTab, onTabChange, searchQuery, onSearchChange, au
     }
   }, [searchOpen]);
 
-  const closeSearch = () => {
+  const closeSearch = useCallback(() => {
     setSearchOpen(false);
     onSearchChange('');
-  };
+  }, [onSearchChange]);
+
+  const openSearch = useCallback(() => setSearchOpen(true), []);
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+        e.preventDefault();
+        setSearchOpen(true);
+      }
+    };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, []);
 
   return (
     <header
@@ -71,7 +85,7 @@ export function Navbar({ activeTab, onTabChange, searchQuery, onSearchChange, au
                     role="menuitem"
                     aria-current={activeTab === tab.id ? 'page' : undefined}
                     onClick={() => onTabChange(tab.id)}
-                    className="px-3 py-1.5 rounded text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 hidden sm:block"
+                    className="relative px-3 py-1.5 rounded text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 hidden sm:block"
                     style={{
                       color: activeTab === tab.id ? 'var(--text-primary)' : 'var(--text-muted)',
                       background: activeTab === tab.id ? 'var(--bg-hover)' : 'transparent',
@@ -79,6 +93,15 @@ export function Navbar({ activeTab, onTabChange, searchQuery, onSearchChange, au
                     } as React.CSSProperties}
                   >
                     {tab.label}
+                    {tab.id === 'mylist' && myListCount > 0 && (
+                      <span
+                        className="absolute -top-1 -right-1 min-w-[18px] h-[18px] rounded-full text-white text-[10px] font-bold flex items-center justify-center px-1"
+                        style={{ background: 'var(--accent)' }}
+                        aria-label={`${myListCount} items in My List`}
+                      >
+                        {myListCount > 99 ? '99+' : myListCount}
+                      </span>
+                    )}
                   </button>
                 </li>
               ))}

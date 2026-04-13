@@ -5,14 +5,17 @@ import { CheckCircle, Info, AlertCircle, X } from 'lucide-react';
 
 export type ToastType = 'success' | 'info' | 'error';
 
+interface ToastAction { label: string; onClick: () => void; }
+
 interface ToastItem {
   id: string;
   message: string;
   type: ToastType;
+  action?: ToastAction;
 }
 
 interface ToastContextValue {
-  showToast: (message: string, type?: ToastType) => void;
+  showToast: (message: string, type?: ToastType, action?: ToastAction) => void;
 }
 
 // ── Context ──────────────────────────────────────────────────────────────────
@@ -37,10 +40,10 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     delete timers.current[id];
   }, []);
 
-  const showToast = useCallback((message: string, type: ToastType = 'success') => {
+  const showToast = useCallback((message: string, type: ToastType = 'success', action?: ToastAction) => {
     const id = `${Date.now()}-${Math.random()}`;
-    setToasts(prev => [...prev.slice(-3), { id, message, type }]); // max 4 visible
-    timers.current[id] = setTimeout(() => dismiss(id), 3000);
+    setToasts(prev => [...prev.slice(-3), { id, message, type, action }]);
+    timers.current[id] = setTimeout(() => dismiss(id), action ? 5000 : 3000);
   }, [dismiss]);
 
   return (
@@ -85,6 +88,15 @@ function ToastCard({ toast, onDismiss }: { toast: ToastItem; onDismiss: (id: str
     >
       {iconMap[toast.type]}
       <span className="text-sm flex-1 text-white">{toast.message}</span>
+      {toast.action && (
+        <button
+          onClick={() => { toast.action!.onClick(); onDismiss(toast.id); }}
+          className="text-xs font-bold px-2 py-1 rounded transition-colors hover:opacity-80 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white flex-shrink-0"
+          style={{ color: '#46d369', background: 'rgba(70,211,105,0.15)' }}
+        >
+          {toast.action.label}
+        </button>
+      )}
       <button
         onClick={() => onDismiss(toast.id)}
         className="p-0.5 rounded hover:opacity-70 transition-opacity focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white"

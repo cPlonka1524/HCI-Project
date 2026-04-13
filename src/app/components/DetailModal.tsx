@@ -170,6 +170,18 @@ export function DetailModal({
               <X size={22} className="text-white" aria-hidden="true" />
             </button>
 
+            {/* Video unavailable message */}
+            {autoplayEnabled && videoError && (
+              <div
+                className="absolute bottom-4 left-4 z-20 px-3 py-1.5 rounded text-xs"
+                style={{ background: 'rgba(0,0,0,0.75)', color: 'rgba(255,255,255,0.6)', border: '1px solid rgba(255,255,255,0.2)' }}
+                role="status"
+                aria-live="polite"
+              >
+                Preview unavailable — showing cover image
+              </div>
+            )}
+
             {/* Volume */}
             {autoplayEnabled && !videoError && (
               <button
@@ -211,8 +223,13 @@ export function DetailModal({
                 <button
                   onClick={e => {
                     e.stopPropagation();
-                    if (inList) { onRemoveFromList(item.id); showToast(`Removed "${item.title}" from My List`, 'info'); }
-                    else { onAddToList(item); showToast(`Added "${item.title}" to My List`); }
+                    if (inList) {
+                      onRemoveFromList(item.id);
+                      showToast(`Removed "${item.title}" from My List`, 'info', { label: 'Undo', onClick: () => onAddToList(item) });
+                    } else {
+                      onAddToList(item);
+                      showToast(`Added "${item.title}" to My List`);
+                    }
                   }}
                   className="p-2.5 rounded-full border-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
                   style={{ background: 'rgba(42,42,42,0.8)', borderColor: 'rgba(100,100,100,0.6)', color: '#fff' }}

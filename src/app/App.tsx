@@ -466,6 +466,9 @@ export default function App() {
   const [playingItem, setPlayingItem] = useState<ContentItem | null>(null);
   const [myList, setMyList] = useState<ContentItem[]>([]);
   const [likedItems, setLikedItems] = useState<string[]>([]);
+  const [watchHistory, setWatchHistory] = useState<ContentItem[]>([]);
+  const [dismissedIds, setDismissedIds] = useState<string[]>([]);
+  const [isTabLoading, setIsTabLoading] = useState(false);
   const [showKeyboardHelp, setShowKeyboardHelp] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(() => !localStorage.getItem('netflix-onboarded'));
   const [preferredGenres, setPreferredGenres] = useState<string[]>(() => {
@@ -488,6 +491,14 @@ export default function App() {
     setLikedItems(prev => prev.includes(item.id) ? prev.filter(id => id !== item.id) : [...prev, item.id]);
   };
 
+  const playItem = (item: ContentItem) => {
+    setPlayingItem(item);
+    setWatchHistory(prev => [item, ...prev.filter(i => i.id !== item.id)].slice(0, 10));
+  };
+
+  const isDismissed = (id: string) => dismissedIds.includes(id);
+  const dismissItem = (id: string) => setDismissedIds(prev => [...prev, id]);
+
   // Global ? key → keyboard help
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -500,10 +511,15 @@ export default function App() {
   }, []);
 
   const handleTabChange = (tab: typeof activeTab) => {
-    setActiveTab(tab);
-    setSearchQuery('');
-    setSelectedGenre('All');
-    setSortOption('recommended');
+    if (tab === activeTab) return;
+    setIsTabLoading(true);
+    setTimeout(() => {
+      setActiveTab(tab);
+      setSearchQuery('');
+      setSelectedGenre('All');
+      setSortOption('recommended');
+      setIsTabLoading(false);
+    }, 300);
   };
 
   // Search across all content
@@ -519,10 +535,15 @@ export default function App() {
     ));
   }, [searchQuery]);
 
-  // Home sections — each section excludes items already shown in a prior section
-  const trendingNow = useMemo(() =>
-    deduped(ALL_CONTENT.filter(c => c.badge === 'Top 10' || c.badge === 'New')).slice(0, 12),
-  []);
+  // Home sections — all respect selectedGenre and dismissedIds
+  const trendingNow = useMemo(() => {
+    const base = sortItems(
+      filterByGenre(ALL_CONTENT, selectedGenre)
+        .filter(c => !dismissedIds.includes(c.id) && (c.badge === 'Top 10' || c.badge === 'New')),
+      sortOption
+    );
+    return deduped(base).slice(0, 12);
+  }, [selectedGenre, sortOption, dismissedIds]);
 
   const recommendedForYou = useMemo(() => {
     const usedIds = new Set([
@@ -530,13 +551,23 @@ export default function App() {
       ...trendingNow.map(c => c.id),
     ]);
     const pool = sortItems(filterByGenre(ALL_CONTENT, selectedGenre), sortOption)
-      .filter(c => !usedIds.has(c.id));
-    // Boost preferred genres to the front when onboarding preferences are set
+      .filter(c => !usedIds.has(c.id) && !dismissedIds.includes(c.id));
     const sorted = preferredGenres.length > 0
       ? [...pool.filter(c => preferredGenres.includes(c.genre)), ...pool.filter(c => !preferredGenres.includes(c.genre))]
       : pool;
-    return deduped(sorted).slice(0, 12);
-  }, [selectedGenre, sortOption, trendingNow, preferredGenres]);
+
+    // Assign dynamic recommendation reasons based on watch history
+    return deduped(sorted).slice(0, 12).map(item => {
+      if (item.reason) return item; // keep existing reason if already set
+      // Find most recent watched item of same genre
+      const genreMatch = [...watchHistory].reverse().find(w => w.genre === item.genre && w.id !== item.id);
+      if (genreMatch) return { ...item, reason: `Because you watched ${genreMatch.title}` };
+      // Fall back to preferred genre reason
+      if (preferredGenres.includes(item.genre)) return { ...item, reason: `Based on your interest in ${item.genre}` };
+      // Generic fallback
+      return { ...item, reason: `Popular in ${item.genre}` };
+    });
+  }, [selectedGenre, sortOption, trendingNow, preferredGenres, dismissedIds, watchHistory]);
 
   const topRated = useMemo(() => {
     const usedIds = new Set([
@@ -545,10 +576,10 @@ export default function App() {
       ...recommendedForYou.map(c => c.id),
     ]);
     return deduped(
-      sortItems(ALL_CONTENT.filter(c => (c.rating || 0) >= 8.5), 'top-rated')
+      sortItems(filterByGenre(ALL_CONTENT, selectedGenre).filter(c => (c.rating || 0) >= 8.5), sortOption)
         .filter(c => !usedIds.has(c.id))
     ).slice(0, 12);
-  }, [trendingNow, recommendedForYou]);
+  }, [selectedGenre, sortOption, trendingNow, recommendedForYou]);
 
   // Tab-specific lists
   const moviesFiltered = useMemo(() =>
@@ -567,9 +598,10 @@ export default function App() {
     onAddToList: addToList,
     onRemoveFromList: removeFromList,
     isInMyList,
-    onPlayClick: setPlayingItem,
+    onPlayClick: playItem,
     autoplayEnabled,
     viewMode,
+    onDismiss: dismissItem,
   };
 
   const showSearch = searchQuery.trim().length > 0;
@@ -592,9 +624,20 @@ export default function App() {
         onSearchChange={setSearchQuery}
         autoplayEnabled={autoplayEnabled}
         onAutoplayToggle={() => setAutoplayEnabled(p => !p)}
+        myListCount={myList.length}
       />
 
       <main id="main-content" tabIndex={-1}>
+        {isTabLoading && (
+          <div
+            className="fixed inset-0 z-40 flex items-center justify-center pointer-events-none"
+            style={{ paddingTop: '56px' }}
+            role="status"
+            aria-label="Loading content"
+          >
+            <div className="w-10 h-10 rounded-full border-4 border-white/20 border-t-white animate-spin" />
+          </div>
+        )}
         {showSearch ? (
           <SearchResults results={searchResults} query={searchQuery} {...commonProps} />
         ) : (
@@ -603,7 +646,7 @@ export default function App() {
               <>
                 <Hero
                   item={featuredItem}
-                  onPlay={() => setPlayingItem(featuredItem)}
+                  onPlay={() => playItem(featuredItem)}
                   onMoreInfo={() => setSelectedItem(featuredItem)}
                   autoplayEnabled={autoplayEnabled}
                   onAddToList={addToList}
@@ -624,9 +667,12 @@ export default function App() {
                     items={continueWatchingItems}
                     allContent={ALL_CONTENT}
                     onItemClick={setSelectedItem}
-                    onPlayClick={setPlayingItem}
+                    onPlayClick={playItem}
                   />
-                  <ContentSection title="Trending Now" items={trendingNow} {...commonProps} />
+                  {watchHistory.length > 0 && (
+                    <ContentSection title="Recently Watched" items={watchHistory} {...commonProps} onPlayClick={playItem} />
+                  )}
+                  <ContentSection title="Trending Now" items={trendingNow} {...commonProps} onPlayClick={playItem} />
                   <ContentSection title="Recommended For You" items={recommendedForYou} {...commonProps} viewMode={viewMode} />
                   <ContentSection title="Top Rated" items={topRated} {...commonProps} />
                 </div>
@@ -695,7 +741,7 @@ export default function App() {
         onToggleLike={toggleLike}
         moreLikeThis={getMoreLikeThis(selectedItem)}
         onItemClick={setSelectedItem}
-        onPlayClick={setPlayingItem}
+        onPlayClick={playItem}
         autoplayEnabled={autoplayEnabled}
       />
 

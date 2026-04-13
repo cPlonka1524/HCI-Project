@@ -80,6 +80,18 @@ export function Hero({ item, onPlay, onMoreInfo, autoplayEnabled, onAddToList, o
       />
 
       {/* Mute toggle — only when video is playing */}
+      {/* Video unavailable badge */}
+      {autoplayEnabled && videoError && (
+        <div
+          className="absolute top-4 right-4 px-3 py-1.5 rounded text-xs"
+          style={{ background: 'rgba(0,0,0,0.7)', color: 'rgba(255,255,255,0.6)', border: '1px solid rgba(255,255,255,0.2)' }}
+          role="status"
+          aria-live="polite"
+        >
+          Preview unavailable
+        </div>
+      )}
+
       {showVideo && (
         <button
           onClick={() => setIsMuted(m => {
@@ -155,8 +167,13 @@ export function Hero({ item, onPlay, onMoreInfo, autoplayEnabled, onAddToList, o
 
             <button
               onClick={() => {
-                if (inList) { onRemoveFromList(item.id); showToast(`Removed "${item.title}" from My List`, 'info'); }
-                else { onAddToList(item); showToast(`Added "${item.title}" to My List`); }
+                if (inList) {
+                  onRemoveFromList(item.id);
+                  showToast(`Removed "${item.title}" from My List`, 'info', { label: 'Undo', onClick: () => onAddToList(item) });
+                } else {
+                  onAddToList(item);
+                  showToast(`Added "${item.title}" to My List`);
+                }
               }}
               className="p-2.5 rounded-full border-2 transition-colors hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
               style={{ background: 'rgba(42,42,42,0.8)', borderColor: 'rgba(255,255,255,0.5)', color: '#fff' }}

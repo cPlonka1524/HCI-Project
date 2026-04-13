@@ -13,10 +13,11 @@ interface ContentSectionProps {
   onPlayClick: (item: ContentItem) => void;
   autoplayEnabled: boolean;
   viewMode?: 'grid' | 'list';
+  onDismiss?: (itemId: string) => void;
 }
 
 export function ContentSection({
-  title, items, onItemClick, onAddToList, onRemoveFromList, isInMyList, onPlayClick, autoplayEnabled, viewMode = 'grid',
+  title, items, onItemClick, onAddToList, onRemoveFromList, isInMyList, onPlayClick, autoplayEnabled, viewMode = 'grid', onDismiss,
 }: ContentSectionProps) {
   if (items.length === 0) return null;
 
@@ -51,6 +52,7 @@ export function ContentSection({
                 isInMyList={isInMyList}
                 onPlayClick={onPlayClick}
                 autoplayEnabled={autoplayEnabled}
+                onDismiss={onDismiss}
               />
             </li>
           ))}
