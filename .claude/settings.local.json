@@ -1,7 +1,8 @@
 {
   "permissions": {
     "allow": [
-      "mcp__Claude_Preview__preview_start"
+      "mcp__Claude_Preview__preview_start",
+      "Bash(del \"C:\\\\Users\\\\hazel\\\\OneDrive\\\\Desktop\\\\Human Computer Interaction Class\\\\netflix-redesign-improved\\\\netflix-improved\\\\.github\\\\workflows\\\\deploy.yml\")"
     ]
   }
 }
