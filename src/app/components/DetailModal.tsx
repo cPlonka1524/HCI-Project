@@ -2,6 +2,7 @@ import { X, Play, Plus, Volume2, VolumeX, ThumbsUp, Check } from 'lucide-react';
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { ImageWithFallback } from './figma/ImageWithFallback';
 import { getVideoForItem, fallbackVideos } from '../utils/videoPool';
+import { useToast } from './Toast';
 import type { ContentItem } from '../types';
 
 interface DetailModalProps {
@@ -10,6 +11,8 @@ interface DetailModalProps {
   onAddToList: (item: ContentItem) => void;
   onRemoveFromList: (itemId: string) => void;
   isInMyList: (itemId: string) => boolean;
+  isLiked: (itemId: string) => boolean;
+  onToggleLike: (item: ContentItem) => void;
   moreLikeThis: ContentItem[];
   onItemClick: (item: ContentItem) => void;
   onPlayClick: (item: ContentItem) => void;
@@ -17,8 +20,10 @@ interface DetailModalProps {
 }
 
 export function DetailModal({
-  item, onClose, onAddToList, onRemoveFromList, isInMyList, moreLikeThis, onItemClick, onPlayClick, autoplayEnabled,
+  item, onClose, onAddToList, onRemoveFromList, isInMyList, isLiked, onToggleLike,
+  moreLikeThis, onItemClick, onPlayClick, autoplayEnabled,
 }: DetailModalProps) {
+  const { showToast } = useToast();
   const [isMuted, setIsMuted] = useState(true);
   const [selectedSeason, setSelectedSeason] = useState(1);
   const [videoError, setVideoError] = useState(false);
@@ -204,7 +209,11 @@ export function DetailModal({
                   Play
                 </button>
                 <button
-                  onClick={e => { e.stopPropagation(); inList ? onRemoveFromList(item.id) : onAddToList(item); }}
+                  onClick={e => {
+                    e.stopPropagation();
+                    if (inList) { onRemoveFromList(item.id); showToast(`Removed "${item.title}" from My List`, 'info'); }
+                    else { onAddToList(item); showToast(`Added "${item.title}" to My List`); }
+                  }}
                   className="p-2.5 rounded-full border-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
                   style={{ background: 'rgba(42,42,42,0.8)', borderColor: 'rgba(100,100,100,0.6)', color: '#fff' }}
                   aria-label={inList ? `Remove ${item.title} from My List` : `Add ${item.title} to My List`}
@@ -213,10 +222,19 @@ export function DetailModal({
                   {inList ? <Check size={18} aria-hidden="true" /> : <Plus size={18} aria-hidden="true" />}
                 </button>
                 <button
-                  onClick={e => e.stopPropagation()}
+                  onClick={e => {
+                    e.stopPropagation();
+                    onToggleLike(item);
+                    showToast(isLiked(item.id) ? `Removed like from "${item.title}"` : `You liked "${item.title}"`, 'success');
+                  }}
                   className="p-2.5 rounded-full border-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
-                  style={{ background: 'rgba(42,42,42,0.8)', borderColor: 'rgba(100,100,100,0.6)', color: '#fff' }}
-                  aria-label={`Like ${item.title}`}
+                  style={{
+                    background: isLiked(item.id) ? 'rgba(70,211,105,0.25)' : 'rgba(42,42,42,0.8)',
+                    borderColor: isLiked(item.id) ? '#46d369' : 'rgba(100,100,100,0.6)',
+                    color: isLiked(item.id) ? '#46d369' : '#fff',
+                  }}
+                  aria-label={isLiked(item.id) ? `Unlike ${item.title}` : `Like ${item.title}`}
+                  aria-pressed={isLiked(item.id)}
                 >
                   <ThumbsUp size={18} aria-hidden="true" />
                 </button>

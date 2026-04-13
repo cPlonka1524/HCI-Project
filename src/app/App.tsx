@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Navbar } from './components/Navbar';
 import { Hero } from './components/Hero';
 import { ContinueWatching } from './components/ContinueWatching';
@@ -7,6 +7,8 @@ import { FilterBar } from './components/FilterBar';
 import { DetailModal } from './components/DetailModal';
 import { SearchResults } from './components/SearchResults';
 import { PlayScreen } from './components/PlayScreen';
+import { KeyboardHelp } from './components/KeyboardHelp';
+import { Onboarding } from './components/Onboarding';
 import type { ContentItem, WatchProgress } from './types';
 
 // ── Mock Content Data ────────────────────────────────────────────────────────
@@ -463,6 +465,12 @@ export default function App() {
   const [selectedItem, setSelectedItem] = useState<ContentItem | null>(null);
   const [playingItem, setPlayingItem] = useState<ContentItem | null>(null);
   const [myList, setMyList] = useState<ContentItem[]>([]);
+  const [likedItems, setLikedItems] = useState<string[]>([]);
+  const [showKeyboardHelp, setShowKeyboardHelp] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(() => !localStorage.getItem('netflix-onboarded'));
+  const [preferredGenres, setPreferredGenres] = useState<string[]>(() => {
+    try { return JSON.parse(localStorage.getItem('netflix-preferred-genres') || '[]'); } catch { return []; }
+  });
   const [searchQuery, setSearchQuery] = useState('');
   const [autoplayEnabled, setAutoplayEnabled] = useState(true);
   const [selectedGenre, setSelectedGenre] = useState<Genre>('All');
@@ -474,6 +482,22 @@ export default function App() {
     if (!isInMyList(item.id)) setMyList(prev => [...prev, item]);
   };
   const removeFromList = (id: string) => setMyList(prev => prev.filter(i => i.id !== id));
+
+  const isLiked = (id: string) => likedItems.includes(id);
+  const toggleLike = (item: ContentItem) => {
+    setLikedItems(prev => prev.includes(item.id) ? prev.filter(id => id !== item.id) : [...prev, item.id]);
+  };
+
+  // Global ? key → keyboard help
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === '?' && !(e.target instanceof HTMLInputElement) && !(e.target instanceof HTMLTextAreaElement)) {
+        setShowKeyboardHelp(p => !p);
+      }
+    };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, []);
 
   const handleTabChange = (tab: typeof activeTab) => {
     setActiveTab(tab);
@@ -505,11 +529,14 @@ export default function App() {
       ALL_CONTENT[0].id,
       ...trendingNow.map(c => c.id),
     ]);
-    return deduped(
-      sortItems(filterByGenre(ALL_CONTENT, selectedGenre), sortOption)
-        .filter(c => !usedIds.has(c.id))
-    ).slice(0, 12);
-  }, [selectedGenre, sortOption, trendingNow]);
+    const pool = sortItems(filterByGenre(ALL_CONTENT, selectedGenre), sortOption)
+      .filter(c => !usedIds.has(c.id));
+    // Boost preferred genres to the front when onboarding preferences are set
+    const sorted = preferredGenres.length > 0
+      ? [...pool.filter(c => preferredGenres.includes(c.genre)), ...pool.filter(c => !preferredGenres.includes(c.genre))]
+      : pool;
+    return deduped(sorted).slice(0, 12);
+  }, [selectedGenre, sortOption, trendingNow, preferredGenres]);
 
   const topRated = useMemo(() => {
     const usedIds = new Set([
@@ -664,6 +691,8 @@ export default function App() {
         onAddToList={addToList}
         onRemoveFromList={removeFromList}
         isInMyList={isInMyList}
+        isLiked={isLiked}
+        onToggleLike={toggleLike}
         moreLikeThis={getMoreLikeThis(selectedItem)}
         onItemClick={setSelectedItem}
         onPlayClick={setPlayingItem}
@@ -675,6 +704,14 @@ export default function App() {
           item={playingItem}
           onClose={() => setPlayingItem(null)}
         />
+      )}
+
+      {showKeyboardHelp && (
+        <KeyboardHelp onClose={() => setShowKeyboardHelp(false)} />
+      )}
+
+      {showOnboarding && (
+        <Onboarding onComplete={genres => { setPreferredGenres(genres); setShowOnboarding(false); }} />
       )}
     </div>
   );

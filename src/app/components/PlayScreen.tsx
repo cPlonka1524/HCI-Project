@@ -23,6 +23,7 @@ export function PlayScreen({ item, onClose }: PlayScreenProps) {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [urlIndex, setUrlIndex] = useState(0);
+  const [showSkipIntro, setShowSkipIntro] = useState(false);
 
   const videoUrls = useMemo(() => [
     getVideoForItem(item.id),
@@ -147,7 +148,11 @@ export function PlayScreen({ item, onClose }: PlayScreenProps) {
           e.currentTarget.play().catch(() => {});
         }}
         onPlaying={() => { setIsLoading(false); setIsPlaying(true); }}
-        onTimeUpdate={e => setCurrentTime(e.currentTarget.currentTime)}
+        onTimeUpdate={e => {
+          const t = e.currentTarget.currentTime;
+          setCurrentTime(t);
+          setShowSkipIntro(t >= 3 && t < 30);
+        }}
         onLoadedMetadata={e => setDuration(e.currentTarget.duration)}
         onEnded={() => setIsPlaying(false)}
         onPlay={() => setIsPlaying(true)}
@@ -161,6 +166,22 @@ export function PlayScreen({ item, onClose }: PlayScreenProps) {
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
           <Loader size={48} className="text-white animate-spin opacity-80" aria-label="Loading video" />
         </div>
+      )}
+
+      {/* Skip Intro — appears 3s in, disappears at 30s */}
+      {showSkipIntro && (
+        <button
+          onClick={e => {
+            e.stopPropagation();
+            if (videoRef.current) videoRef.current.currentTime = 30;
+            setShowSkipIntro(false);
+          }}
+          className="absolute bottom-24 right-6 px-5 py-2.5 rounded border-2 font-semibold text-sm text-white transition-all hover:bg-white hover:text-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+          style={{ background: 'rgba(0,0,0,0.7)', borderColor: 'rgba(255,255,255,0.8)', zIndex: 10 }}
+          aria-label="Skip intro"
+        >
+          Skip Intro
+        </button>
       )}
 
       {/* Click-to-pause — rendered BEFORE controls overlay so controls stay on top */}

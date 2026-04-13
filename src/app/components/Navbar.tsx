@@ -42,9 +42,25 @@ export function Navbar({ activeTab, onTabChange, searchQuery, onSearchChange, au
       <div className="flex items-center justify-between px-4 md:px-8 h-14">
         {/* Logo */}
         <div className="flex items-center gap-6 md:gap-8">
-          <span className="text-xl font-black tracking-tight select-none" style={{ color: 'var(--accent)' }} aria-label="Netflix Redesign">
-            NFLX
-          </span>
+          <button
+            onClick={() => onTabChange('home')}
+            aria-label="Netflix – Go to Home"
+            className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white rounded select-none"
+            style={{ background: 'transparent', border: 'none', padding: 0, cursor: 'pointer' }}
+          >
+            <span
+              style={{
+                fontFamily: "'Bebas Neue', 'Arial Black', Impact, sans-serif",
+                fontSize: '1.85rem',
+                letterSpacing: '0.04em',
+                color: '#E50914',
+                lineHeight: 1,
+                display: 'block',
+              }}
+            >
+              NETFLIX
+            </span>
+          </button>
 
           {/* Nav tabs */}
           <nav aria-label="Main navigation">
@@ -114,12 +130,13 @@ export function Navbar({ activeTab, onTabChange, searchQuery, onSearchChange, au
           )}
 
           {/* Autoplay toggle */}
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1.5" title="Automatically play video previews when browsing">
             <span className="text-xs hidden md:block" style={{ color: 'var(--text-muted)' }}>Autoplay</span>
             <button
               role="switch"
               aria-checked={autoplayEnabled}
               aria-label={`Autoplay previews ${autoplayEnabled ? 'on' : 'off'}`}
+              title={`Autoplay is ${autoplayEnabled ? 'on' : 'off'} — click to toggle`}
               onClick={onAutoplayToggle}
               className="relative w-9 h-5 rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2"
               style={{
@@ -139,6 +156,7 @@ export function Navbar({ activeTab, onTabChange, searchQuery, onSearchChange, au
           <button
             onClick={toggleTheme}
             aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+            title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
             className="p-2 rounded transition-colors focus-visible:outline-none focus-visible:ring-2"
             style={{ color: 'var(--text-muted)', '--tw-ring-color': 'var(--border-focus)' } as React.CSSProperties}
           >
@@ -151,6 +169,7 @@ export function Navbar({ activeTab, onTabChange, searchQuery, onSearchChange, au
           {/* Profile */}
           <button
             aria-label="Open profile menu"
+            title="Profile"
             className="p-1 rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2"
             style={{ background: 'var(--bg-hover)', '--tw-ring-color': 'var(--border-focus)' } as React.CSSProperties}
           >
