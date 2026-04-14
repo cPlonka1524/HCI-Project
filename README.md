@@ -54,7 +54,7 @@ git clone https://github.com/FGCU-HCI-Netflix/HCI-Project.git
 cd HCI-Project
 
 # 2. Install dependencies
-npm install
+npm ci
 
 # 3. Start the dev server
 npm run dev
