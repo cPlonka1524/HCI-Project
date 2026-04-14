@@ -1,6 +1,10 @@
 # Netflix Redesign Prototype
 CEN 4721 — Human-Computer Interaction
 
+## Test Website for Project
+[Netflix Redesign](https://netflix-redesign-pi.vercel.app/)
+
+
 ## Deploy on Vercel
 1. Install Vercel CLI: `npm install -g vercel`
 2. Run `vercel` in this folder and follow the prompts
