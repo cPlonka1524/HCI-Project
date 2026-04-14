@@ -42,6 +42,8 @@ A Netflix UI redesign built with React, TypeScript, and Tailwind CSS, focused on
 | 3.1.1 Language | `<html lang="en">` present |
 | 4.1.2 Name/Role/Value | All icon-only buttons have `aria-label`; toggles use `role="switch"` and `aria-checked` |
 
+This project also used the WAVE Evaluation Tool Chrome Extension to verify in real-time all WCAG 2.1 AA Guideline passes/fails.
+
 ---
 
 ## Running Locally
