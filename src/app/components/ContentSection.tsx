@@ -69,7 +69,7 @@ export function ContentSection({
           className="text-lg font-bold mb-4 theme-transition"
           style={{ color: 'var(--text-primary)' }}
         >
-          {title}
+          {title} ({items.length})
         </h2>
       )}
 
