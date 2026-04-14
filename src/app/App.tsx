@@ -625,6 +625,9 @@ export default function App() {
         autoplayEnabled={autoplayEnabled}
         onAutoplayToggle={() => setAutoplayEnabled(p => !p)}
         myListCount={myList.length}
+        selectedGenre={selectedGenre}
+        onGenreChange={g => setSelectedGenre(g as Genre)}
+        onHelpOpen={() => setShowKeyboardHelp(true)}
       />
 
       <main id="main-content" tabIndex={-1}>

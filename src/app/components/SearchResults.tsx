@@ -40,8 +40,21 @@ export function SearchResults({
       {results.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-24 gap-4" style={{ color: 'var(--text-muted)' }}>
           <Search size={56} strokeWidth={1} aria-hidden="true" />
-          <p className="text-lg font-medium">No titles match your search</p>
-          <p className="text-sm">Try searching for a movie, series, genre, or director</p>
+          <p className="text-lg font-medium">No results for "{query}"</p>
+          <p className="text-sm">Check your spelling, or try one of these:</p>
+          <ul className="flex flex-wrap gap-2 justify-center mt-1" role="list" aria-label="Suggested genres">
+            {['Action', 'Sci-Fi', 'Drama', 'Thriller', 'Comedy'].map(g => (
+              <li key={g}>
+                <span
+                  className="px-3 py-1 rounded-full text-sm font-medium"
+                  style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', color: 'var(--text-secondary)' }}
+                >
+                  {g}
+                </span>
+              </li>
+            ))}
+          </ul>
+          <p className="text-xs mt-1">Or try a director, cast member, or title keyword</p>
         </div>
       ) : (
         <ul

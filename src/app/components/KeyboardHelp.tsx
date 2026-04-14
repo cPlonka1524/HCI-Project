@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import { X } from 'lucide-react';
 
 interface KeyboardHelpProps {
@@ -15,6 +16,20 @@ const SHORTCUTS = [
 ];
 
 export function KeyboardHelp({ onClose }: KeyboardHelpProps) {
+  const closeRef = useRef<HTMLButtonElement>(null);
+
+  // Move focus into modal on open (WCAG 2.4.3)
+  useEffect(() => {
+    setTimeout(() => closeRef.current?.focus(), 50);
+  }, []);
+
+  // Close on Escape — prevents keyboard trap (WCAG 2.1.2)
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, [onClose]);
+
   return (
     <div
       className="fixed inset-0 z-[300] flex items-center justify-center"
@@ -35,6 +50,7 @@ export function KeyboardHelp({ onClose }: KeyboardHelpProps) {
             Keyboard Shortcuts
           </h2>
           <button
+            ref={closeRef}
             onClick={onClose}
             className="p-1.5 rounded-full hover:opacity-70 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
             style={{ color: 'var(--text-muted)' }}

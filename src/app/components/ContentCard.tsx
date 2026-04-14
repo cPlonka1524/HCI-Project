@@ -115,7 +115,9 @@ export function ContentCard({
                 }}
                 onError={handleVideoError}
                 aria-label={`Preview video for ${item.title}`}
-              />
+              >
+                <track kind="captions" label="English" srcLang="en" src="/captions/placeholder.vtt" default />
+              </video>
             ) : (
               <ImageWithFallback src={item.thumbnail} alt={`Thumbnail for ${item.title}`} className="w-full h-full object-cover" />
             )}

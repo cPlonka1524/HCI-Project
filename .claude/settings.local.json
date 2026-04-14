@@ -2,7 +2,28 @@
   "permissions": {
     "allow": [
       "mcp__Claude_Preview__preview_start",
-      "Bash(del \"C:\\\\Users\\\\hazel\\\\OneDrive\\\\Desktop\\\\Human Computer Interaction Class\\\\netflix-redesign-improved\\\\netflix-improved\\\\.github\\\\workflows\\\\deploy.yml\")"
+      "Bash(del \"C:\\\\Users\\\\hazel\\\\OneDrive\\\\Desktop\\\\Human Computer Interaction Class\\\\netflix-redesign-improved\\\\netflix-improved\\\\.github\\\\workflows\\\\deploy.yml\")",
+      "Bash(node -e \"const docx = require\\('docx'\\); console.log\\(Object.keys\\(docx\\).join\\('\\\\n'\\)\\)\")",
+      "Bash(npm install:*)",
+      "Bash(node -e \"const docx = require\\('docx'\\); console.log\\(Object.keys\\(docx\\).slice\\(0,30\\).join\\('\\\\n'\\)\\)\")",
+      "Bash(npm root:*)",
+      "Bash(node -e \"require\\('/usr/lib/node_modules/docx'\\); console.log\\('ok'\\)\")",
+      "Bash(npm init:*)",
+      "Bash(node generate_report.js)",
+      "Bash(python scripts/office/validate.py 'C:/Users/hazel/OneDrive/Desktop/Human Computer Interaction Class/netflix-redesign-improved/netflix-improved/HCI_Project_Report.docx')",
+      "Bash(python scripts/office/validate.py 'C:/Users/hazel/OneDrive/Desktop/Human Computer Interaction Class/netflix-redesign-improved/netflix-improved/HCI_Project_Report.docx' --verbose)",
+      "Bash(python -c ':*)",
+      "Bash(mkdir -p /tmp/hci_validate)",
+      "Bash(python scripts/office/validate.py /tmp/hci_validate --original 'C:/Users/hazel/OneDrive/Desktop/Human Computer Interaction Class/netflix-redesign-improved/netflix-improved/HCI_Project_Report.docx')",
+      "Bash(mkdir -p C:/tmp/hci_val)",
+      "Bash(python scripts/office/validate.py C:/tmp/hci_val)",
+      "Bash(python scripts/office/validate.py C:/tmp/hci_val --original 'C:/Users/hazel/OneDrive/Desktop/Human Computer Interaction Class/netflix-redesign-improved/netflix-improved/HCI_Project_Report.docx')",
+      "Bash(python scripts/office/validate.py \"C:\\\\Users\\\\hazel\\\\OneDrive\\\\Desktop\\\\Human Computer Interaction Class\\\\netflix-redesign-improved\\\\netflix-improved\\\\HCI_Project_Report.docx\")",
+      "Bash(python scripts/office/unpack.py \"C:\\\\Users\\\\hazel\\\\OneDrive\\\\Desktop\\\\Human Computer Interaction Class\\\\netflix-redesign-improved\\\\netflix-improved\\\\HCI_Project_Report.docx\" unpacked_verify/)",
+      "Bash(python scripts/office/unpack.py \"/c/Users/hazel/OneDrive/Desktop/Human Computer Interaction Class/netflix-redesign-improved/netflix-improved/HCI_Project_Report.docx\" /tmp/docx_unpacked)",
+      "Bash(python /c/Users/hazel/AppData/Roaming/Claude/local-agent-mode-sessions/skills-plugin/98d0468d-db76-416a-9990-c73355e31632/45e2cc5a-755e-4fd2-a045-8b89813c2f52/skills/docx/scripts/office/unpack.py \"/c/Users/hazel/OneDrive/Desktop/Human Computer Interaction Class/netflix-redesign-improved/netflix-improved/HCI_Project_Report.docx\" /tmp/hci_docx)",
+      "Bash(pandoc \"C:\\\\Users\\\\hazel\\\\OneDrive\\\\Desktop\\\\HCI Draft Report.pdf\" -o output.txt)",
+      "Bash(python3 -c ':*)"
     ]
   }
 }

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Check } from 'lucide-react';
 
 const GENRES = ['Action', 'Sci-Fi', 'Drama', 'Thriller', 'Comedy'] as const;
@@ -10,6 +10,21 @@ interface OnboardingProps {
 
 export function Onboarding({ onComplete }: OnboardingProps) {
   const [selected, setSelected] = useState<Genre[]>([]);
+  const firstBtnRef = useRef<HTMLButtonElement>(null);
+
+  // Move focus into modal on mount (WCAG 2.4.3)
+  useEffect(() => {
+    setTimeout(() => firstBtnRef.current?.focus(), 50);
+  }, []);
+
+  // Escape skips onboarding — prevents keyboard trap (WCAG 2.1.2)
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') { localStorage.setItem('netflix-onboarded', 'true'); onComplete([]); }
+    };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, [onComplete]);
 
   const toggle = (g: Genre) =>
     setSelected(prev => prev.includes(g) ? prev.filter(x => x !== g) : [...prev, g]);
@@ -54,11 +69,12 @@ export function Onboarding({ onComplete }: OnboardingProps) {
 
         {/* Genre tiles */}
         <div className="grid grid-cols-3 gap-3 mb-8" role="group" aria-label="Select genres">
-          {GENRES.map(g => {
+          {GENRES.map((g, i) => {
             const active = selected.includes(g);
             return (
               <button
                 key={g}
+                ref={i === 0 ? firstBtnRef : undefined}
                 onClick={() => toggle(g)}
                 aria-pressed={active}
                 className="relative py-4 rounded-lg font-semibold text-sm transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"

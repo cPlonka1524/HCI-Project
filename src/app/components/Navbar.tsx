@@ -1,6 +1,9 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { Search, X, Sun, Moon, User } from 'lucide-react';
+import { Search, X, Sun, Moon, User, ChevronDown, HelpCircle } from 'lucide-react';
 import { useTheme } from '../ThemeContext';
+
+const GENRES = ['Action', 'Sci-Fi', 'Drama', 'Thriller', 'Comedy'] as const;
+type Genre = typeof GENRES[number] | 'All';
 
 interface NavbarProps {
   activeTab: 'home' | 'movies' | 'series' | 'mylist';
@@ -10,6 +13,9 @@ interface NavbarProps {
   autoplayEnabled: boolean;
   onAutoplayToggle: () => void;
   myListCount: number;
+  selectedGenre?: Genre;
+  onGenreChange?: (g: Genre) => void;
+  onHelpOpen?: () => void;
 }
 
 const TABS = [
@@ -19,9 +25,11 @@ const TABS = [
   { id: 'mylist' as const, label: 'My List' },
 ];
 
-export function Navbar({ activeTab, onTabChange, searchQuery, onSearchChange, autoplayEnabled, onAutoplayToggle, myListCount }: NavbarProps) {
+export function Navbar({ activeTab, onTabChange, searchQuery, onSearchChange, autoplayEnabled, onAutoplayToggle, myListCount, selectedGenre, onGenreChange, onHelpOpen }: NavbarProps) {
   const [searchOpen, setSearchOpen] = useState(false);
+  const [genreMenuOpen, setGenreMenuOpen] = useState(false);
   const searchRef = useRef<HTMLInputElement>(null);
+  const genreMenuRef = useRef<HTMLDivElement>(null);
   const { theme, toggleTheme } = useTheme();
 
   useEffect(() => {
@@ -36,6 +44,17 @@ export function Navbar({ activeTab, onTabChange, searchQuery, onSearchChange, au
   }, [onSearchChange]);
 
   const openSearch = useCallback(() => setSearchOpen(true), []);
+
+  // Close genre menu when clicking outside
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (genreMenuRef.current && !genreMenuRef.current.contains(e.target as Node)) {
+        setGenreMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -105,6 +124,57 @@ export function Navbar({ activeTab, onTabChange, searchQuery, onSearchChange, au
                   </button>
                 </li>
               ))}
+
+              {/* Genre quick-jump — Nielsen #7 Flexibility & Efficiency */}
+              {onGenreChange && (
+                <li role="none" className="relative hidden sm:block" ref={genreMenuRef}>
+                  <button
+                    role="menuitem"
+                    aria-haspopup="true"
+                    aria-expanded={genreMenuOpen}
+                    onClick={() => setGenreMenuOpen(v => !v)}
+                    title="Jump directly to a genre"
+                    className="flex items-center gap-1 px-3 py-1.5 rounded text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2"
+                    style={{
+                      color: selectedGenre && selectedGenre !== 'All' ? 'var(--text-primary)' : 'var(--text-muted)',
+                      background: selectedGenre && selectedGenre !== 'All' ? 'var(--bg-hover)' : 'transparent',
+                      '--tw-ring-color': 'var(--border-focus)',
+                    } as React.CSSProperties}
+                  >
+                    {selectedGenre && selectedGenre !== 'All' ? selectedGenre : 'Genres'}
+                    <ChevronDown size={13} aria-hidden="true" style={{ transform: genreMenuOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s' }} />
+                  </button>
+                  {genreMenuOpen && (
+                    <ul
+                      role="menu"
+                      aria-label="Browse by genre"
+                      className="absolute top-full left-0 mt-1 rounded-lg shadow-xl overflow-hidden z-50"
+                      style={{ background: 'var(--bg-modal)', border: '1px solid var(--border)', minWidth: '130px' }}
+                    >
+                      {(['All', ...GENRES] as Genre[]).map(g => (
+                        <li key={g} role="none">
+                          <button
+                            role="menuitem"
+                            onClick={() => {
+                              onGenreChange(g);
+                              if (activeTab !== 'home') onTabChange('home');
+                              setGenreMenuOpen(false);
+                            }}
+                            className="w-full text-left px-4 py-2 text-sm transition-colors focus-visible:outline-none focus-visible:ring-inset focus-visible:ring-2"
+                            style={{
+                              color: selectedGenre === g ? '#E50914' : 'var(--text-secondary)',
+                              background: selectedGenre === g ? 'var(--bg-hover)' : 'transparent',
+                              fontWeight: selectedGenre === g ? 600 : 400,
+                            }}
+                          >
+                            {g === 'All' ? 'All Genres' : g}
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </li>
+              )}
             </ul>
           </nav>
         </div>
@@ -119,7 +189,12 @@ export function Navbar({ activeTab, onTabChange, searchQuery, onSearchChange, au
                 type="text"
                 value={searchQuery}
                 onChange={e => onSearchChange(e.target.value)}
-                onKeyDown={e => e.key === 'Escape' && closeSearch()}
+                onKeyDown={e => {
+                  if (e.key === 'Escape') {
+                    if (searchQuery) { onSearchChange(''); } // first Esc: clear text, keep open (#3)
+                    else { closeSearch(); }                   // second Esc: close panel
+                  }
+                }}
                 placeholder="Search titles, genres, directors..."
                 aria-label="Search content"
                 autoComplete="off"
@@ -188,6 +263,19 @@ export function Navbar({ activeTab, onTabChange, searchQuery, onSearchChange, au
               : <Moon size={18} aria-hidden="true" />
             }
           </button>
+
+          {/* Keyboard shortcuts help — persistent icon (H10 Help & Documentation) */}
+          {onHelpOpen && (
+            <button
+              onClick={onHelpOpen}
+              aria-label="Keyboard shortcuts help"
+              title="Keyboard shortcuts (?)"
+              className="p-2 rounded transition-colors focus-visible:outline-none focus-visible:ring-2 hidden sm:flex items-center justify-center"
+              style={{ color: 'var(--text-muted)', '--tw-ring-color': 'var(--border-focus)' } as React.CSSProperties}
+            >
+              <HelpCircle size={18} aria-hidden="true" />
+            </button>
+          )}
 
           {/* Profile */}
           <button

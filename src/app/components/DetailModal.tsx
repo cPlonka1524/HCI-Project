@@ -154,7 +154,9 @@ export function DetailModal({
                 }}
                 onError={handleVideoError}
                 aria-label={`Preview video for ${item.title}`}
-              />
+              >
+                <track kind="captions" label="English" srcLang="en" src="/captions/placeholder.vtt" default />
+              </video>
             )}
 
             <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent pointer-events-none" aria-hidden="true" />

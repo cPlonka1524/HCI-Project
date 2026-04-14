@@ -69,7 +69,9 @@ export function Hero({ item, onPlay, onMoreInfo, autoplayEnabled, onAddToList, o
           }}
           onError={handleVideoError}
           aria-label={`Trailer for ${item.title}`}
-        />
+        >
+          <track kind="captions" label="English" srcLang="en" src="/captions/placeholder.vtt" default />
+        </video>
       )}
 
       {/* Gradient overlay */}

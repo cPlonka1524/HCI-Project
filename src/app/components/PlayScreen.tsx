@@ -159,7 +159,9 @@ export function PlayScreen({ item, onClose }: PlayScreenProps) {
         onPause={() => setIsPlaying(false)}
         onError={handleVideoError}
         aria-label={`Video player for ${item.title}`}
-      />
+      >
+        <track kind="captions" label="English" srcLang="en" src="/captions/placeholder.vtt" default />
+      </video>
 
       {/* Loading spinner — shown while video buffers */}
       {isLoading && (
