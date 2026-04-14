@@ -9,6 +9,7 @@ const SHORTCUTS = [
   { keys: ['Space', 'K'], description: 'Play / Pause (in player)' },
   { keys: ['M'], description: 'Mute / Unmute (in player)' },
   { keys: ['Ctrl+K'], description: 'Open search' },
+  { keys: ['Ctrl+Backspace', 'Cmd+Backspace'], description: 'Clear active search results' },
   { keys: ['Esc'], description: 'Close modal or exit player' },
   { keys: ['?'], description: 'Show / hide this help panel' },
   { keys: ['Tab'], description: 'Navigate between elements' },

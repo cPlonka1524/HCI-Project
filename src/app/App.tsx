@@ -9,6 +9,7 @@ import { SearchResults } from './components/SearchResults';
 import { PlayScreen } from './components/PlayScreen';
 import { KeyboardHelp } from './components/KeyboardHelp';
 import { Onboarding } from './components/Onboarding';
+import { useToast } from './components/Toast';
 import type { ContentItem, WatchProgress } from './types';
 
 // ── Mock Content Data ────────────────────────────────────────────────────────
@@ -461,6 +462,7 @@ const getMoreLikeThis = (item: ContentItem | null): ContentItem[] => {
 // ── Component ────────────────────────────────────────────────────────────────
 
 export default function App() {
+  const { showToast } = useToast();
   const [activeTab, setActiveTab] = useState<'home' | 'movies' | 'series' | 'mylist'>('home');
   const [selectedItem, setSelectedItem] = useState<ContentItem | null>(null);
   const [playingItem, setPlayingItem] = useState<ContentItem | null>(null);
@@ -509,6 +511,26 @@ export default function App() {
     document.addEventListener('keydown', handler);
     return () => document.removeEventListener('keydown', handler);
   }, []);
+
+  // Global Ctrl/Cmd + Backspace → clear active search results quickly
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      const isClearShortcut = (e.ctrlKey || e.metaKey) && e.key === 'Backspace';
+      if (!isClearShortcut || !searchQuery.trim()) return;
+      if (
+        e.target instanceof HTMLInputElement ||
+        e.target instanceof HTMLTextAreaElement ||
+        (e.target instanceof HTMLElement && e.target.isContentEditable)
+      ) return;
+
+      e.preventDefault();
+      setSearchQuery('');
+      showToast('Search cleared', 'info');
+    };
+
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, [searchQuery, showToast]);
 
   const handleTabChange = (tab: typeof activeTab) => {
     if (tab === activeTab) return;
@@ -642,7 +664,7 @@ export default function App() {
           </div>
         )}
         {showSearch ? (
-          <SearchResults results={searchResults} query={searchQuery} {...commonProps} />
+          <SearchResults results={searchResults} query={searchQuery} onSearchChange={setSearchQuery} {...commonProps} />
         ) : (
           <>
             {activeTab === 'home' && (

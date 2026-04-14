@@ -1,6 +1,7 @@
 import { Play, Plus, Check, ChevronDown, Star } from 'lucide-react';
 import { ContentCard } from './ContentCard';
 import { ImageWithFallback } from './figma/ImageWithFallback';
+import { useToast } from './Toast';
 import type { ContentItem } from '../types';
 
 interface ContentSectionProps {
@@ -19,6 +20,7 @@ interface ContentSectionProps {
 export function ContentSection({
   title, items, onItemClick, onAddToList, onRemoveFromList, isInMyList, onPlayClick, autoplayEnabled, viewMode = 'grid', onDismiss,
 }: ContentSectionProps) {
+  const { showToast } = useToast();
   if (items.length === 0) return null;
 
   const sectionId = `section-${title.replace(/\s+/g, '-').toLowerCase() || 'content'}`;
@@ -106,7 +108,15 @@ export function ContentSection({
                     </button>
 
                     <button
-                      onClick={() => inList ? onRemoveFromList(item.id) : onAddToList(item)}
+                      onClick={() => {
+                        if (inList) {
+                          onRemoveFromList(item.id);
+                          showToast(`Removed "${item.title}" from My List`, 'info', { label: 'Undo', onClick: () => onAddToList(item) });
+                        } else {
+                          onAddToList(item);
+                          showToast(`Added "${item.title}" to My List`);
+                        }
+                      }}
                       className="w-8 h-8 rounded-full border-2 flex items-center justify-center transition-colors focus-visible:outline-none focus-visible:ring-2"
                       style={{ borderColor: 'var(--border)', color: 'var(--text-primary)', background: 'transparent', '--tw-ring-color': 'var(--border-focus)' } as React.CSSProperties}
                       aria-label={inList ? `Remove ${item.title} from My List` : `Add ${item.title} to My List`}
