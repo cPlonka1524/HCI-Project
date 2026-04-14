@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from 'react';
 import { Play, Plus, Check, ChevronDown, Star } from 'lucide-react';
 import { ContentCard } from './ContentCard';
 import { ImageWithFallback } from './figma/ImageWithFallback';
@@ -21,9 +22,44 @@ export function ContentSection({
   title, items, onItemClick, onAddToList, onRemoveFromList, isInMyList, onPlayClick, autoplayEnabled, viewMode = 'grid', onDismiss,
 }: ContentSectionProps) {
   const { showToast } = useToast();
+  const gridRef = useRef<HTMLUListElement | null>(null);
+  const [columns, setColumns] = useState(1);
+  const [visibleRows, setVisibleRows] = useState(1);
+
+  useEffect(() => {
+    if (viewMode !== 'grid') return;
+    const el = gridRef.current;
+    if (!el) return;
+
+    const MIN_CARD_WIDTH = 150;
+    const GAP = 12; // Tailwind gap-3 => 0.75rem
+    const updateColumns = () => {
+      const width = el.clientWidth;
+      const next = Math.max(1, Math.floor((width + GAP) / (MIN_CARD_WIDTH + GAP)));
+      setColumns(next);
+    };
+
+    updateColumns();
+    const observer = new ResizeObserver(updateColumns);
+    observer.observe(el);
+    window.addEventListener('resize', updateColumns);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener('resize', updateColumns);
+    };
+  }, [viewMode]);
+
+  useEffect(() => {
+    setVisibleRows(1);
+  }, [title, items, viewMode]);
+
   if (items.length === 0) return null;
 
   const sectionId = `section-${title.replace(/\s+/g, '-').toLowerCase() || 'content'}`;
+  const visibleCount = columns * visibleRows;
+  const displayedItems = viewMode === 'grid' ? items.slice(0, visibleCount) : items;
+  const hasMoreRows = viewMode === 'grid' && displayedItems.length < items.length;
+  const canCollapse = viewMode === 'grid' && items.length > columns;
 
   return (
     <section aria-labelledby={title ? sectionId : undefined}>
@@ -39,12 +75,13 @@ export function ContentSection({
 
       {viewMode === 'grid' ? (
         <ul
+          ref={gridRef}
           role="list"
           aria-label={title || 'Content'}
           className="grid gap-3"
           style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))' }}
         >
-          {items.map(item => (
+          {displayedItems.map(item => (
             <li key={item.id}>
               <ContentCard
                 item={item}
@@ -139,6 +176,22 @@ export function ContentSection({
             );
           })}
         </ul>
+      )}
+
+      {canCollapse && (
+        <div className="mt-4 flex justify-center">
+          <button
+            onClick={() => {
+              if (hasMoreRows) setVisibleRows(r => r + 1);
+              else setVisibleRows(1);
+            }}
+            className="px-4 py-2 rounded-md text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2"
+            style={{ background: 'var(--bg-card)', color: 'var(--text-primary)', border: '1px solid var(--border)', '--tw-ring-color': 'var(--border-focus)' } as React.CSSProperties}
+            aria-label={hasMoreRows ? `Show more titles in ${title || 'this section'}` : `Collapse ${title || 'this section'}`}
+          >
+            {hasMoreRows ? 'Click to see more' : 'Collapse'}
+          </button>
+        </div>
       )}
     </section>
   );
