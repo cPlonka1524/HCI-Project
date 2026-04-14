@@ -2,6 +2,7 @@ import { useState, useRef, useCallback, useMemo } from 'react';
 import { Play, Plus, Check, ChevronDown, Volume2, VolumeX, ThumbsDown } from 'lucide-react';
 import { ImageWithFallback } from './figma/ImageWithFallback';
 import { getVideoForItem, fallbackVideos } from '../utils/videoPool';
+import { useToast } from './Toast';
 import type { ContentItem } from '../types';
 
 interface ContentCardProps {
@@ -18,6 +19,7 @@ interface ContentCardProps {
 export function ContentCard({
   item, onItemClick, onAddToList, onRemoveFromList, isInMyList, onPlayClick, autoplayEnabled, onDismiss,
 }: ContentCardProps) {
+  const { showToast } = useToast();
   const [hovered, setHovered] = useState(false);
   const [isMuted, setIsMuted] = useState(true);
   const [videoError, setVideoError] = useState(false);
@@ -173,7 +175,16 @@ export function ContentCard({
               </button>
 
               <button
-                onClick={e => { e.stopPropagation(); inList ? onRemoveFromList(item.id) : onAddToList(item); }}
+                onClick={e => {
+                  e.stopPropagation();
+                  if (inList) {
+                    onRemoveFromList(item.id);
+                    showToast(`Removed "${item.title}" from My List`, 'info', { label: 'Undo', onClick: () => onAddToList(item) });
+                  } else {
+                    onAddToList(item);
+                    showToast(`Added "${item.title}" to My List`);
+                  }
+                }}
                 className="w-8 h-8 rounded-full border-2 flex items-center justify-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
                 style={{ borderColor: 'rgba(255,255,255,0.5)', color: '#fff', background: 'rgba(42,42,42,0.8)' }}
                 aria-label={inList ? `Remove ${item.title} from My List` : `Add ${item.title} to My List`}

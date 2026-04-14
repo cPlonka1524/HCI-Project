@@ -24,6 +24,7 @@ export function PlayScreen({ item, onClose }: PlayScreenProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [urlIndex, setUrlIndex] = useState(0);
   const [showSkipIntro, setShowSkipIntro] = useState(false);
+  const [videoFailed, setVideoFailed] = useState(false);
 
   const videoUrls = useMemo(() => [
     getVideoForItem(item.id),
@@ -120,6 +121,11 @@ export function PlayScreen({ item, onClose }: PlayScreenProps) {
   const handleVideoError = () => {
     if (urlIndex < videoUrls.length - 1) {
       setUrlIndex(i => i + 1);
+      setIsLoading(true);
+      setVideoFailed(false);
+    } else {
+      setIsLoading(false);
+      setVideoFailed(true);
     }
   };
 
@@ -167,6 +173,47 @@ export function PlayScreen({ item, onClose }: PlayScreenProps) {
       {isLoading && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
           <Loader size={48} className="text-white animate-spin opacity-80" aria-label="Loading video" />
+        </div>
+      )}
+
+      {/* Hard failure state after all fallback URLs fail */}
+      {videoFailed && (
+        <div
+          className="absolute inset-0 z-20 flex items-center justify-center px-6"
+          style={{ background: 'rgba(0,0,0,0.75)' }}
+          role="alert"
+          aria-live="assertive"
+        >
+          <div
+            className="max-w-md w-full rounded-lg border p-5 text-center"
+            style={{ background: 'rgba(20,20,20,0.95)', borderColor: 'rgba(255,255,255,0.25)', color: '#fff' }}
+          >
+            <p className="text-lg font-semibold mb-2">Video failed to load</p>
+            <p className="text-sm text-white/70 mb-4">
+              We could not play this title right now. Try again or return to browsing.
+            </p>
+            <div className="flex items-center justify-center gap-2">
+              <button
+                onClick={e => {
+                  e.stopPropagation();
+                  setVideoFailed(false);
+                  setIsLoading(true);
+                  setUrlIndex(0);
+                }}
+                className="px-4 py-2 rounded font-semibold text-sm transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+                style={{ background: '#fff', color: '#000' }}
+              >
+                Retry
+              </button>
+              <button
+                onClick={e => { e.stopPropagation(); onClose(); }}
+                className="px-4 py-2 rounded font-semibold text-sm border transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+                style={{ borderColor: 'rgba(255,255,255,0.5)', color: '#fff' }}
+              >
+                Back to Browse
+              </button>
+            </div>
+          </div>
         </div>
       )}
 

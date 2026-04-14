@@ -31,6 +31,7 @@ export function DetailModal({
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
+  const recommendationPanelRef = useRef<HTMLDivElement>(null);
 
   const videoUrls = useMemo(() => [
     getVideoForItem(item?.id ?? ''),
@@ -259,6 +260,18 @@ export function DetailModal({
                 </button>
               </div>
 
+              <button
+                onClick={e => {
+                  e.stopPropagation();
+                  recommendationPanelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }}
+                className="mt-3 text-xs font-semibold underline underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white rounded px-1 py-0.5"
+                style={{ color: 'rgba(255,255,255,0.85)' }}
+                aria-label="Jump to recommendation explanation details"
+              >
+                Why this recommendation?
+              </button>
+
               <div className="flex items-center gap-3 text-sm mt-4 flex-wrap" style={{ color: 'rgba(255,255,255,0.8)' }}>
                 {item.rating && (
                   <span className="font-bold" style={{ color: '#46d369' }}>{Math.round(item.rating * 10)}% Match</span>
@@ -405,7 +418,7 @@ export function DetailModal({
                 )}
 
                 {/* Recommendation Transparency */}
-                <div className="mt-2 pt-4 border-t theme-transition" style={{ borderColor: 'var(--border)' }}>
+                <div ref={recommendationPanelRef} className="mt-2 pt-4 border-t theme-transition" style={{ borderColor: 'var(--border)' }}>
                   <h3 className="text-sm font-semibold mb-3 theme-transition" style={{ color: 'var(--text-muted)' }}>
                     Why We Recommend This
                   </h3>
