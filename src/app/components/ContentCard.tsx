@@ -1,5 +1,5 @@
-import { useState, useRef, useCallback, useMemo } from 'react';
-import { Play, Plus, Check, ChevronDown, Volume2, VolumeX, ThumbsDown } from 'lucide-react';
+import { useState, useRef, useCallback, useMemo, useEffect } from 'react';
+import { Play, Plus, Check, ChevronDown, Volume2, VolumeX, ThumbsUp } from 'lucide-react';
 import { ImageWithFallback } from './figma/ImageWithFallback';
 import { getVideoForItem, fallbackVideos } from '../utils/videoPool';
 import { useToast } from './Toast';
@@ -24,9 +24,13 @@ export function ContentCard({
   const [isMuted, setIsMuted] = useState(true);
   const [videoError, setVideoError] = useState(false);
   const [urlIndex, setUrlIndex] = useState(0);
+  const [liked, setLiked] = useState(false);
+  const [optimisticInList, setOptimisticInList] = useState<boolean | null>(null);
   const hoverTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
-  const inList = isInMyList(item.id);
+  const inListFromParent = isInMyList(item.id);
+  // Use optimistic state if set, otherwise use parent state
+  const inList = optimisticInList !== null ? optimisticInList : inListFromParent;
 
   const videoUrls = useMemo(() => [getVideoForItem(item.id), ...fallbackVideos], [item.id]);
   const currentVideoUrl = videoUrls[urlIndex];
@@ -57,6 +61,11 @@ export function ContentCard({
     setUrlIndex(0);
     setVideoError(false);
   };
+
+  // Clear optimistic state when parent state updates
+  useEffect(() => {
+    setOptimisticInList(null);
+  }, [inListFromParent]);
 
   return (
     <div
@@ -178,9 +187,11 @@ export function ContentCard({
                 onClick={e => {
                   e.stopPropagation();
                   if (inList) {
+                    setOptimisticInList(false);
                     onRemoveFromList(item.id);
-                    showToast(`Removed "${item.title}" from My List`, 'info', { label: 'Undo', onClick: () => onAddToList(item) });
+                    showToast(`Removed "${item.title}" from My List`, 'info', { label: 'Undo', onClick: () => { setOptimisticInList(true); onAddToList(item); } });
                   } else {
+                    setOptimisticInList(true);
                     onAddToList(item);
                     showToast(`Added "${item.title}" to My List`);
                   }
@@ -193,17 +204,25 @@ export function ContentCard({
                 {inList ? <Check size={14} aria-hidden="true" /> : <Plus size={14} aria-hidden="true" />}
               </button>
 
-              {onDismiss && (
-                <button
-                  onClick={e => { e.stopPropagation(); onDismiss(item.id); }}
-                  className="w-8 h-8 rounded-full border-2 flex items-center justify-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
-                  style={{ borderColor: 'rgba(255,255,255,0.5)', color: '#fff', background: 'rgba(42,42,42,0.8)' }}
-                  aria-label={`Not interested in ${item.title}`}
-                  title="Not interested"
-                >
-                  <ThumbsDown size={14} aria-hidden="true" />
-                </button>
-              )}
+              <button
+                onClick={e => {
+                  e.stopPropagation();
+                  const next = !liked;
+                  setLiked(next);
+                  showToast(next ? `Liked "${item.title}"` : `Removed like for "${item.title}"`, 'info');
+                }}
+                className="w-8 h-8 rounded-full border-2 flex items-center justify-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+                style={{
+                  borderColor: liked ? '#46d369' : 'rgba(255,255,255,0.5)',
+                  color: liked ? '#46d369' : '#fff',
+                  background: 'rgba(42,42,42,0.8)',
+                }}
+                aria-label={liked ? `Unlike ${item.title}` : `Like ${item.title}`}
+                aria-pressed={liked}
+                title={liked ? 'Unlike' : 'Like'}
+              >
+                <ThumbsUp size={14} aria-hidden="true" />
+              </button>
 
               <button
                 onClick={e => { e.stopPropagation(); onItemClick(item); }}

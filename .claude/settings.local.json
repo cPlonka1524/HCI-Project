@@ -23,7 +23,23 @@
       "Bash(python scripts/office/unpack.py \"/c/Users/hazel/OneDrive/Desktop/Human Computer Interaction Class/netflix-redesign-improved/netflix-improved/HCI_Project_Report.docx\" /tmp/docx_unpacked)",
       "Bash(python /c/Users/hazel/AppData/Roaming/Claude/local-agent-mode-sessions/skills-plugin/98d0468d-db76-416a-9990-c73355e31632/45e2cc5a-755e-4fd2-a045-8b89813c2f52/skills/docx/scripts/office/unpack.py \"/c/Users/hazel/OneDrive/Desktop/Human Computer Interaction Class/netflix-redesign-improved/netflix-improved/HCI_Project_Report.docx\" /tmp/hci_docx)",
       "Bash(pandoc \"C:\\\\Users\\\\hazel\\\\OneDrive\\\\Desktop\\\\HCI Draft Report.pdf\" -o output.txt)",
-      "Bash(python3 -c ':*)"
+      "Bash(python3 -c ':*)",
+      "Bash(python -m markitdown \"C:\\\\Users\\\\hazel\\\\Downloads\\\\CEN_4721__Group_Project_Spring2026 \\(1\\).pdf\")",
+      "Bash(python -m markitdown \"C:\\\\Users\\\\hazel\\\\Downloads\\\\HCI_Project_Report.docx\")",
+      "Bash(pip install:*)",
+      "Bash(node generate.js)",
+      "Bash(python scripts/office/soffice.py --headless --convert-to pdf Netflix_Redesign_Presentation.pptx)",
+      "Bash(python \"C:\\\\Users\\\\hazel\\\\AppData\\\\Roaming\\\\Claude\\\\local-agent-mode-sessions\\\\skills-plugin\\\\98d0468d-db76-416a-9990-c73355e31632\\\\45e2cc5a-755e-4fd2-a045-8b89813c2f52\\\\skills\\\\pptx\\\\scripts\\\\office\\\\soffice.py\" --headless --convert-to pdf \"C:\\\\Users\\\\hazel\\\\Downloads\\\\netflix_pptx\\\\Netflix_Redesign_Presentation.pptx\")",
+      "Bash(where soffice:*)",
+      "Bash(where libreoffice:*)",
+      "Read(//c/Program Files/LibreOffice/**)",
+      "Bash(cmd /c \"where soffice\")",
+      "Bash(cmd /c \"dir \\\\\"C:\\\\\\\\Program Files\\\\\\\\LibreOffice\\\\\\\\program\\\\\\\\soffice.exe\\\\\"\")",
+      "Bash(cmd /c \"dir \\\\\"C:\\\\\\\\Program Files\\\\\\\\LibreOffice\\\\\"\")",
+      "Bash(python -m markitdown \"C:\\\\Users\\\\hazel\\\\Downloads\\\\netflix_pptx\\\\Netflix_Redesign_Presentation.pptx\")",
+      "Bash(grep -iE \"\\\\bx{3,}\\\\b|lorem|ipsum|\\\\bTODO|\\\\[insert|placeholder\")",
+      "Bash(cmd /c \"dir \\\\\"C:\\\\\\\\Users\\\\\\\\hazel\\\\\\\\Downloads\\\\\\\\netflix_pptx\\\\\\\\Netflix_Redesign_Presentation.pptx\\\\\"\")",
+      "Bash(npx tsc:*)"
     ]
   }
 }

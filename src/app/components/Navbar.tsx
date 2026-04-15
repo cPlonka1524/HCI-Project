@@ -29,7 +29,7 @@ export function Navbar({ activeTab, onTabChange, searchQuery, onSearchChange, au
   const [searchOpen, setSearchOpen] = useState(false);
   const [genreMenuOpen, setGenreMenuOpen] = useState(false);
   const searchRef = useRef<HTMLInputElement>(null);
-  const genreMenuRef = useRef<HTMLDivElement>(null);
+  const genreMenuRef = useRef<HTMLLIElement>(null);
   const { theme, toggleTheme } = useTheme();
 
   useEffect(() => {

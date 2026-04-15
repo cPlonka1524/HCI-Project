@@ -3,6 +3,7 @@ import { Play, Plus, Check, ChevronDown, Star, ChevronLeft, ChevronRight } from 
 import { ContentCard } from './ContentCard';
 import { ImageWithFallback } from './figma/ImageWithFallback';
 import { useToast } from './Toast';
+import { getVideoForItem, fallbackVideos } from '../utils/videoPool';
 import type { ContentItem } from '../types';
 
 interface ContentSectionProps {
@@ -27,6 +28,10 @@ export function ContentSection({
   const [visibleRows, setVisibleRows] = useState(1);
   const [focusedCardMode, setFocusedCardMode] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
+  const [focusVideoUrl, setFocusVideoUrl] = useState<string>('');
+  const [focusVideoError, setFocusVideoError] = useState(false);
+  const [focusVideoUrlIndex, setFocusVideoUrlIndex] = useState(0);
+  const focusVideoRef = useRef<HTMLVideoElement | null>(null);
 
   useEffect(() => {
     if (viewMode !== 'grid' || focusedCardMode) return;
@@ -55,6 +60,8 @@ export function ContentSection({
     setVisibleRows(1);
     setFocusedCardMode(false);
     setActiveIndex(0);
+    setFocusVideoError(false);
+    setFocusVideoUrlIndex(0);
   }, [title, items, viewMode]);
 
   if (items.length === 0) return null;
@@ -67,6 +74,12 @@ export function ContentSection({
   const activeItem = items[activeIndex] || items[0];
   const prevItem = items[(activeIndex - 1 + items.length) % items.length];
   const nextItem = items[(activeIndex + 1) % items.length];
+
+  // Update focus card video URL when activeIndex changes
+  useEffect(() => {
+    const videoUrls = [getVideoForItem(activeItem.id), ...fallbackVideos];
+    setFocusVideoUrl(videoUrls[focusVideoUrlIndex]);
+  }, [activeIndex, focusVideoUrlIndex, activeItem.id]);
 
   const showFocusedToggle = viewMode === 'grid' && title;
 
@@ -115,7 +128,8 @@ export function ContentSection({
       )}
 
       {viewMode === 'grid' && focusedCardMode ? (
-        <div className="relative max-w-4xl mx-auto min-h-[24rem] md:min-h-[28rem]">
+        /* ── Focused card: vertical layout, viewport-capped so no scrolling ── */
+        <div className="relative max-w-2xl mx-auto">
           {items.length > 1 && (
             <>
               <button
@@ -137,6 +151,7 @@ export function ContentSection({
             </>
           )}
 
+          {/* Ghost background cards for depth effect */}
           <div
             className="absolute inset-0 z-0 rounded-xl opacity-35 scale-[0.95] translate-y-2 overflow-hidden border"
             style={{ background: 'var(--bg-card)', borderColor: 'var(--border)' }}
@@ -157,24 +172,54 @@ export function ContentSection({
             style={{ background: 'var(--bg-modal)', borderColor: 'var(--border)', boxShadow: 'var(--shadow)' }}
             aria-label={`Focused card for ${activeItem.title}`}
           >
+            {/* Thumbnail — 16:9 aspect-video, naturally sized by the max-w-2xl container */}
             <button
               onClick={() => onItemClick(activeItem)}
-              className="w-full text-left focus-visible:outline-none focus-visible:ring-2"
+              className="relative w-full focus-visible:outline-none focus-visible:ring-2"
               style={{ '--tw-ring-color': 'var(--border-focus)' } as React.CSSProperties}
               aria-label={`Open details for ${activeItem.title}`}
             >
-              <div className="relative aspect-video">
-                <ImageWithFallback src={activeItem.thumbnail} alt={`Poster for ${activeItem.title}`} className="w-full h-full object-cover" />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" aria-hidden="true" />
-                {activeItem.badge && (
-                  <span
-                    className="absolute top-3 left-3 px-2 py-1 text-xs font-bold rounded"
-                    style={{ background: 'var(--accent)', color: '#fff' }}
+              <div className="aspect-video relative">
+                {autoplayEnabled && !focusVideoError ? (
+                  <video
+                    key={`${activeItem.id}-${focusVideoUrl}`}
+                    ref={focusVideoRef}
+                    src={focusVideoUrl}
+                    autoPlay
+                    loop
+                    playsInline
+                    preload="auto"
+                    poster={activeItem.thumbnail}
+                    className="w-full h-full object-cover"
+                    onCanPlay={e => {
+                      e.currentTarget.muted = true;
+                      e.currentTarget.play().catch(() => {});
+                    }}
+                    onError={() => {
+                      const videoUrls = [getVideoForItem(activeItem.id), ...fallbackVideos];
+                      if (focusVideoUrlIndex < videoUrls.length - 1) {
+                        setFocusVideoUrlIndex(i => i + 1);
+                      } else {
+                        setFocusVideoError(true);
+                      }
+                    }}
+                    aria-label={`Preview video for ${activeItem.title}`}
                   >
-                    {activeItem.badge}
-                  </span>
+                    <track kind="captions" label="English" srcLang="en" src="/captions/placeholder.vtt" default />
+                  </video>
+                ) : (
+                  <ImageWithFallback src={activeItem.thumbnail} alt={`Poster for ${activeItem.title}`} className="w-full h-full object-cover" />
                 )}
               </div>
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" aria-hidden="true" />
+              {activeItem.badge && (
+                <span
+                  className="absolute top-3 left-3 px-2 py-1 text-xs font-bold rounded"
+                  style={{ background: 'var(--accent)', color: '#fff' }}
+                >
+                  {activeItem.badge}
+                </span>
+              )}
             </button>
 
             <div className="p-4 md:p-5">
@@ -191,14 +236,14 @@ export function ContentSection({
                 {activeItem.maturityRating && <span>· {activeItem.maturityRating}</span>}
               </div>
               <h3 className="text-xl font-bold mb-1 theme-transition" style={{ color: 'var(--text-primary)' }}>{activeItem.title}</h3>
-              <p className="text-sm line-clamp-3 theme-transition" style={{ color: 'var(--text-secondary)' }}>
+              <p className="text-sm line-clamp-2 theme-transition" style={{ color: 'var(--text-secondary)' }}>
                 {activeItem.description || 'No description available.'}
               </p>
               {activeItem.reason && (
-                <p className="text-xs mt-2 italic" style={{ color: 'var(--reason-text)' }}>↗ {activeItem.reason}</p>
+                <p className="text-xs mt-1 italic" style={{ color: 'var(--reason-text)' }}>↗ {activeItem.reason}</p>
               )}
 
-              <div className="mt-4 flex items-center gap-2" role="group" aria-label={`Actions for ${activeItem.title}`}>
+              <div className="mt-3 flex items-center gap-2" role="group" aria-label={`Actions for ${activeItem.title}`}>
                 <button
                   onClick={() => onPlayClick(activeItem)}
                   className="px-4 h-9 rounded-md flex items-center gap-1.5 font-semibold transition-opacity hover:opacity-85 focus-visible:outline-none focus-visible:ring-2"
