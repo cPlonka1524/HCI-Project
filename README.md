@@ -77,6 +77,35 @@ Then open http://localhost:5173 in your browser.
 
 ---
 
+## Interaction Design Process
+### Step 1 - Identify Needs & Establish Requirements
+The following methods were used to identify needs & establish requirements:
+* Simulated questionnaire using Claude
+* Semi-structured interview with 3 peers
+* Conducted research on similar products (Netflix, Disney+, Hulu, HBO Max)
+
+### Step 2 - Develop Alternative Designs
+The following were used to develop alternative designs:
+* Conceptual Model
+  - Interface metaphors
+  - Manipulation, Instructing, and Responding Interaction Types
+  - Netflix brand colors (black and red)
+  - Row and grid layouts
+  - Icons for navigation and usability
+
+### Step 3 - Build Interactive Versions
+The following were used to build interactive prototypes:
+* Low-Fidelity Prototype (wireframes made in Figma)
+* High-Fidelity Prototype (our MVP & what is in this repo)
+  - Horizontal Prototyping was used to implement a broad set of feature changes
+  - Vertical Prototyping was used to provide depth and functionality to the elements within the prototype to make the system feel just like Netflix
+
+### Step 4 - Evaluate Prototype
+The following were used to evaluate the prototype:
+* Usability Testing - had 2 peers test the prototype and documented their actions and experience
+* Field Study - analyzed the 2 peers as they were navigating the prototype to see how they would usually interact with another, similar product
+* Analytical Evaluation - used Nielsen's Heuristics to evaluate prototype before involving users; see below for the full list.
+
 ## Nielsen's 10 Heuristics — Full Coverage
 
 | # | Heuristic | Implementation |
