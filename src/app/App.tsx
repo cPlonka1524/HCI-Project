@@ -8,6 +8,9 @@ import { FilterBar } from './components/FilterBar';
 import { DetailModal } from './components/DetailModal';
 import { SearchResults } from './components/SearchResults';
 import { PlayScreen } from './components/PlayScreen';
+import { KeyboardHelp } from './components/KeyboardHelp';
+import { Onboarding } from './components/Onboarding';
+import { useToast } from './components/Toast';
 import type { ContentItem, WatchProgress } from './types';
 import { LOCAL_ASSET_CONTENT } from './utils/localAssets';
 
@@ -463,6 +466,7 @@ const getMoreLikeThis = (item: ContentItem | null): ContentItem[] => {
 // ── Component ────────────────────────────────────────────────────────────────
 
 export default function App() {
+  const { showToast } = useToast();
   const [activeTab, setActiveTab] = useState<'home' | 'movies' | 'series' | 'mylist'>('home');
   const [selectedItem, setSelectedItem] = useState<ContentItem | null>(null);
   const [playingItem, setPlayingItem] = useState<ContentItem | null>(null);
@@ -509,10 +513,15 @@ export default function App() {
   };
 
   const handleTabChange = (tab: typeof activeTab) => {
-    setActiveTab(tab);
-    setSearchQuery('');
-    setSelectedGenre('All');
-    setSortOption('recommended');
+    if (tab === activeTab) return;
+    setIsTabLoading(true);
+    setTimeout(() => {
+      setActiveTab(tab);
+      setSearchQuery('');
+      setSelectedGenre('All');
+      setSortOption('recommended');
+      setIsTabLoading(false);
+    }, 300);
   };
 
   // Search across all content
@@ -528,21 +537,39 @@ export default function App() {
     ));
   }, [searchQuery]);
 
-  // Home sections — each section excludes items already shown in a prior section
-  const trendingNow = useMemo(() =>
-    deduped(ALL_CONTENT.filter(c => c.badge === 'Top 10' || c.badge === 'New')).slice(0, 12),
-  []);
+  // Home sections — all respect selectedGenre and dismissedIds
+  const trendingNow = useMemo(() => {
+    const base = sortItems(
+      filterByGenre(ALL_CONTENT, selectedGenre)
+        .filter(c => !dismissedIds.includes(c.id) && (c.badge === 'Top 10' || c.badge === 'New')),
+      sortOption
+    );
+    return deduped(base).slice(0, 12);
+  }, [selectedGenre, sortOption, dismissedIds]);
 
   const recommendedForYou = useMemo(() => {
     const usedIds = new Set([
       ALL_CONTENT[0].id,
       ...trendingNow.map(c => c.id),
     ]);
-    return deduped(
-      sortItems(filterByGenre(ALL_CONTENT, selectedGenre), sortOption)
-        .filter(c => !usedIds.has(c.id))
-    ).slice(0, 12);
-  }, [selectedGenre, sortOption, trendingNow]);
+    const pool = sortItems(filterByGenre(ALL_CONTENT, selectedGenre), sortOption)
+      .filter(c => !usedIds.has(c.id) && !dismissedIds.includes(c.id));
+    const sorted = preferredGenres.length > 0
+      ? [...pool.filter(c => preferredGenres.includes(c.genre)), ...pool.filter(c => !preferredGenres.includes(c.genre))]
+      : pool;
+
+    // Assign dynamic recommendation reasons based on watch history
+    return deduped(sorted).slice(0, 12).map(item => {
+      if (item.reason) return item; // keep existing reason if already set
+      // Find most recent watched item of same genre
+      const genreMatch = [...watchHistory].reverse().find(w => w.genre === item.genre && w.id !== item.id);
+      if (genreMatch) return { ...item, reason: `Because you watched ${genreMatch.title}` };
+      // Fall back to preferred genre reason
+      if (preferredGenres.includes(item.genre)) return { ...item, reason: `Based on your interest in ${item.genre}` };
+      // Generic fallback
+      return { ...item, reason: `Popular in ${item.genre}` };
+    });
+  }, [selectedGenre, sortOption, trendingNow, preferredGenres, dismissedIds, watchHistory]);
 
   const localAssetsRow = useMemo(() => LOCAL_ASSET_CONTENT.slice(0, 18), []);
 
@@ -553,10 +580,10 @@ export default function App() {
       ...recommendedForYou.map(c => c.id),
     ]);
     return deduped(
-      sortItems(ALL_CONTENT.filter(c => (c.rating || 0) >= 8.5), 'top-rated')
+      sortItems(filterByGenre(ALL_CONTENT, selectedGenre).filter(c => (c.rating || 0) >= 8.5), sortOption)
         .filter(c => !usedIds.has(c.id))
     ).slice(0, 12);
-  }, [trendingNow, recommendedForYou]);
+  }, [selectedGenre, sortOption, trendingNow, recommendedForYou]);
 
   // Tab-specific lists
   const moviesFiltered = useMemo(() =>
@@ -577,6 +604,7 @@ export default function App() {
     onPlayClick: handlePlayClick,
     autoplayEnabled,
     viewMode,
+    onDismiss: dismissItem,
   };
 
   const showSearch = searchQuery.trim().length > 0;
@@ -599,11 +627,25 @@ export default function App() {
         onSearchChange={setSearchQuery}
         autoplayEnabled={autoplayEnabled}
         onAutoplayToggle={() => setAutoplayEnabled(p => !p)}
+        myListCount={myList.length}
+        selectedGenre={selectedGenre}
+        onGenreChange={g => setSelectedGenre(g as Genre)}
+        onHelpOpen={() => setShowKeyboardHelp(true)}
       />
 
       <main id="main-content" tabIndex={-1}>
+        {isTabLoading && (
+          <div
+            className="fixed inset-0 z-40 flex items-center justify-center pointer-events-none"
+            style={{ paddingTop: '56px' }}
+            role="status"
+            aria-label="Loading content"
+          >
+            <div className="w-10 h-10 rounded-full border-4 border-white/20 border-t-white animate-spin" />
+          </div>
+        )}
         {showSearch ? (
-          <SearchResults results={searchResults} query={searchQuery} {...commonProps} />
+          <SearchResults results={searchResults} query={searchQuery} onSearchChange={setSearchQuery} {...commonProps} />
         ) : (
           <>
             {activeTab === 'home' && (
@@ -718,6 +760,8 @@ export default function App() {
         onAddToList={addToList}
         onRemoveFromList={removeFromList}
         isInMyList={isInMyList}
+        isLiked={isLiked}
+        onToggleLike={toggleLike}
         moreLikeThis={getMoreLikeThis(selectedItem)}
         onItemClick={handleItemClick}
         onPlayClick={handlePlayClick}
@@ -729,6 +773,14 @@ export default function App() {
           item={playingItem}
           onClose={() => setPlayingItem(null)}
         />
+      )}
+
+      {showKeyboardHelp && (
+        <KeyboardHelp onClose={() => setShowKeyboardHelp(false)} />
+      )}
+
+      {showOnboarding && (
+        <Onboarding onComplete={genres => { setPreferredGenres(genres); setShowOnboarding(false); }} />
       )}
     </div>
   );

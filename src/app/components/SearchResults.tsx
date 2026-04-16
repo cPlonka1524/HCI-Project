@@ -5,6 +5,7 @@ import type { ContentItem } from '../types';
 interface SearchResultsProps {
   results: ContentItem[];
   query: string;
+  onSearchChange: (q: string) => void;
   onItemClick: (item: ContentItem) => void;
   onAddToList: (item: ContentItem) => void;
   onRemoveFromList: (itemId: string) => void;
@@ -14,8 +15,10 @@ interface SearchResultsProps {
 }
 
 export function SearchResults({
-  results, query, onItemClick, onAddToList, onRemoveFromList, isInMyList, onPlayClick, autoplayEnabled,
+  results, query, onSearchChange, onItemClick, onAddToList, onRemoveFromList, isInMyList, onPlayClick, autoplayEnabled,
 }: SearchResultsProps) {
+  const suggestions = ['Action', 'Sci-Fi', 'Drama', 'Thriller', 'Comedy'];
+
   return (
     <div className="px-4 md:px-8 py-6" style={{ paddingTop: '5rem' }}>
       <div className="flex items-baseline gap-3 mb-6">
@@ -40,8 +43,23 @@ export function SearchResults({
       {results.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-24 gap-4" style={{ color: 'var(--text-muted)' }}>
           <Search size={56} strokeWidth={1} aria-hidden="true" />
-          <p className="text-lg font-medium">No titles match your search</p>
-          <p className="text-sm">Try searching for a movie, series, genre, or director</p>
+          <p className="text-lg font-medium">No results for "{query}"</p>
+          <p className="text-sm">Check your spelling, or try one of these quick searches:</p>
+          <ul className="flex flex-wrap gap-2 justify-center mt-1" role="list" aria-label="Suggested genres">
+            {suggestions.map(g => (
+              <li key={g}>
+                <button
+                  onClick={() => onSearchChange(g)}
+                  className="px-3 py-1 rounded-full text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2"
+                  style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', color: 'var(--text-secondary)' }}
+                  aria-label={`Search for ${g}`}
+                >
+                  {g}
+                </button>
+              </li>
+            ))}
+          </ul>
+          <p className="text-xs mt-1">Or try a director, cast member, or title keyword. Press Esc to clear quickly.</p>
         </div>
       ) : (
         <ul

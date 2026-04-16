@@ -1,7 +1,8 @@
-import { useState, useRef, useCallback, useMemo } from 'react';
-import { Play, Plus, Check, ChevronDown, Volume2, VolumeX } from 'lucide-react';
+import { useState, useRef, useCallback, useMemo, useEffect } from 'react';
+import { Play, Plus, Check, ChevronDown, Volume2, VolumeX, ThumbsUp } from 'lucide-react';
 import { ImageWithFallback } from './figma/ImageWithFallback';
 import { getVideoForItem, fallbackVideos } from '../utils/videoPool';
+import { useToast } from './Toast';
 import type { ContentItem } from '../types';
 
 interface ContentCardProps {
@@ -12,18 +13,24 @@ interface ContentCardProps {
   isInMyList: (itemId: string) => boolean;
   onPlayClick: (item: ContentItem) => void;
   autoplayEnabled: boolean;
+  onDismiss?: (itemId: string) => void;
 }
 
 export function ContentCard({
-  item, onItemClick, onAddToList, onRemoveFromList, isInMyList, onPlayClick, autoplayEnabled,
+  item, onItemClick, onAddToList, onRemoveFromList, isInMyList, onPlayClick, autoplayEnabled, onDismiss,
 }: ContentCardProps) {
+  const { showToast } = useToast();
   const [hovered, setHovered] = useState(false);
   const [isMuted, setIsMuted] = useState(true);
   const [videoError, setVideoError] = useState(false);
   const [urlIndex, setUrlIndex] = useState(0);
+  const [liked, setLiked] = useState(false);
+  const [optimisticInList, setOptimisticInList] = useState<boolean | null>(null);
   const hoverTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
-  const inList = isInMyList(item.id);
+  const inListFromParent = isInMyList(item.id);
+  // Use optimistic state if set, otherwise use parent state
+  const inList = optimisticInList !== null ? optimisticInList : inListFromParent;
 
   const videoUrls = useMemo(() => [getVideoForItem(item.id), ...fallbackVideos], [item.id]);
   const currentVideoUrl = videoUrls[urlIndex];
@@ -55,6 +62,11 @@ export function ContentCard({
     setVideoError(false);
   };
 
+  // Clear optimistic state when parent state updates
+  useEffect(() => {
+    setOptimisticInList(null);
+  }, [inListFromParent]);
+
   return (
     <div
       className="relative group"
@@ -82,6 +94,9 @@ export function ContentCard({
         <div className="mt-1.5 px-0.5">
           <p className="text-xs font-medium line-clamp-1 theme-transition" style={{ color: 'var(--text-primary)' }}>{item.title}</p>
           <p className="text-xs theme-transition" style={{ color: 'var(--text-muted)' }}>{item.year} · {item.genre}</p>
+          {item.reason && (
+            <p className="text-xs mt-0.5 line-clamp-1 italic" style={{ color: 'var(--reason-text, #46d369)' }}>↗ {item.reason}</p>
+          )}
         </div>
       </button>
 
@@ -111,7 +126,9 @@ export function ContentCard({
                 }}
                 onError={handleVideoError}
                 aria-label={`Preview video for ${item.title}`}
-              />
+              >
+                <track kind="captions" label="English" srcLang="en" src="/captions/placeholder.vtt" default />
+              </video>
             ) : (
               <ImageWithFallback src={item.thumbnail} alt={`Thumbnail for ${item.title}`} className="w-full h-full object-cover" />
             )}
@@ -167,13 +184,44 @@ export function ContentCard({
               </button>
 
               <button
-                onClick={e => { e.stopPropagation(); inList ? onRemoveFromList(item.id) : onAddToList(item); }}
+                onClick={e => {
+                  e.stopPropagation();
+                  if (inList) {
+                    setOptimisticInList(false);
+                    onRemoveFromList(item.id);
+                    showToast(`Removed "${item.title}" from My List`, 'info', { label: 'Undo', onClick: () => { setOptimisticInList(true); onAddToList(item); } });
+                  } else {
+                    setOptimisticInList(true);
+                    onAddToList(item);
+                    showToast(`Added "${item.title}" to My List`);
+                  }
+                }}
                 className="w-8 h-8 rounded-full border-2 flex items-center justify-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
                 style={{ borderColor: 'rgba(255,255,255,0.5)', color: '#fff', background: 'rgba(42,42,42,0.8)' }}
                 aria-label={inList ? `Remove ${item.title} from My List` : `Add ${item.title} to My List`}
                 aria-pressed={inList}
               >
                 {inList ? <Check size={14} aria-hidden="true" /> : <Plus size={14} aria-hidden="true" />}
+              </button>
+
+              <button
+                onClick={e => {
+                  e.stopPropagation();
+                  const next = !liked;
+                  setLiked(next);
+                  showToast(next ? `Liked "${item.title}"` : `Removed like for "${item.title}"`, 'info');
+                }}
+                className="w-8 h-8 rounded-full border-2 flex items-center justify-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+                style={{
+                  borderColor: liked ? '#46d369' : 'rgba(255,255,255,0.5)',
+                  color: liked ? '#46d369' : '#fff',
+                  background: 'rgba(42,42,42,0.8)',
+                }}
+                aria-label={liked ? `Unlike ${item.title}` : `Like ${item.title}`}
+                aria-pressed={liked}
+                title={liked ? 'Unlike' : 'Like'}
+              >
+                <ThumbsUp size={14} aria-hidden="true" />
               </button>
 
               <button
