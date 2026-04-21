@@ -477,12 +477,37 @@ export default function App() {
   const [selectedGenre, setSelectedGenre] = useState<Genre>('All');
   const [sortOption, setSortOption] = useState<SortOption>('recommended');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [isTabLoading, setIsTabLoading] = useState(false);
+  const [dismissedIds, setDismissedIds] = useState<string[]>([]);
+  const [preferredGenres, setPreferredGenres] = useState<string[]>([]);
+  const [watchHistory, setWatchHistory] = useState<ContentItem[]>([]);
+  const [showKeyboardHelp, setShowKeyboardHelp] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [likedItems, setLikedItems] = useState<Set<string>>(new Set());
 
   const isInMyList = (id: string) => myList.some(i => i.id === id);
   const addToList = (item: ContentItem) => {
     if (!isInMyList(item.id)) setMyList(prev => [...prev, item]);
   };
   const removeFromList = (id: string) => setMyList(prev => prev.filter(i => i.id !== id));
+
+  const dismissItem = (id: string) => {
+    setDismissedIds(prev => [...prev, id]);
+  };
+
+  const isLiked = (id: string) => likedItems.has(id);
+  const toggleLike = (item: ContentItem) => {
+    const id = item.id;
+    setLikedItems(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(id)) {
+        newSet.delete(id);
+      } else {
+        newSet.add(id);
+      }
+      return newSet;
+    });
+  };
 
   const addToContinueWatching = (item: ContentItem, progress = 5) => {
     setContinueWatchingItems(prev => {

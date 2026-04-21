@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { Search, X, Sun, Moon, User, ChevronDown, HelpCircle } from 'lucide-react';
 import { useTheme } from '../ThemeContext';
 
-const GENRES = ['Action', 'Sci-Fi', 'Drama', 'Thriller', 'Comedy'] as const;
+const GENRES = ['Action', 'Sci-Fi', 'Drama', 'Thriller', 'Comedy', 'Animation', 'Fantasy'] as const;
 type Genre = typeof GENRES[number] | 'All';
 
 interface NavbarProps {
