@@ -1,7 +1,8 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { Play, Info, Plus, Check, Volume2, VolumeX } from 'lucide-react';
 import { ImageWithFallback } from './figma/ImageWithFallback';
 import { getVideoForItem, fallbackVideos } from '../utils/videoPool';
+import { useToast } from './Toast';
 import type { ContentItem } from '../types';
 
 interface HeroProps {
@@ -15,11 +16,21 @@ interface HeroProps {
 }
 
 export function Hero({ item, onPlay, onMoreInfo, autoplayEnabled, onAddToList, onRemoveFromList, isInMyList }: HeroProps) {
-  const inList = isInMyList(item.id);
+  const inListFromParent = isInMyList(item.id);
+  const { showToast } = useToast();
   const [isMuted, setIsMuted] = useState(true);
   const [videoError, setVideoError] = useState(false);
   const [urlIndex, setUrlIndex] = useState(0);
+  const [optimisticInList, setOptimisticInList] = useState<boolean | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
+
+  // Use optimistic state if set, otherwise use parent state
+  const inList = optimisticInList !== null ? optimisticInList : inListFromParent;
+
+  // Clear optimistic state when parent state updates
+  useEffect(() => {
+    setOptimisticInList(null);
+  }, [inListFromParent]);
 
   const videoUrls = [getVideoForItem(item.id), ...fallbackVideos];
   const currentVideoUrl = videoUrls[urlIndex];
@@ -67,7 +78,9 @@ export function Hero({ item, onPlay, onMoreInfo, autoplayEnabled, onAddToList, o
           }}
           onError={handleVideoError}
           aria-label={`Trailer for ${item.title}`}
-        />
+        >
+          <track kind="captions" label="English" srcLang="en" src="/captions/placeholder.vtt" default />
+        </video>
       )}
 
       {/* Gradient overlay */}
@@ -78,6 +91,18 @@ export function Hero({ item, onPlay, onMoreInfo, autoplayEnabled, onAddToList, o
       />
 
       {/* Mute toggle — only when video is playing */}
+      {/* Video unavailable badge */}
+      {autoplayEnabled && videoError && (
+        <div
+          className="absolute top-4 right-4 px-3 py-1.5 rounded text-xs"
+          style={{ background: 'rgba(0,0,0,0.7)', color: 'rgba(255,255,255,0.6)', border: '1px solid rgba(255,255,255,0.2)' }}
+          role="status"
+          aria-live="polite"
+        >
+          Preview unavailable
+        </div>
+      )}
+
       {showVideo && (
         <button
           onClick={() => setIsMuted(m => {
@@ -152,7 +177,17 @@ export function Hero({ item, onPlay, onMoreInfo, autoplayEnabled, onAddToList, o
             </button>
 
             <button
-              onClick={() => inList ? onRemoveFromList(item.id) : onAddToList(item)}
+              onClick={() => {
+                if (inList) {
+                  setOptimisticInList(false);
+                  onRemoveFromList(item.id);
+                  showToast(`Removed "${item.title}" from My List`, 'info', { label: 'Undo', onClick: () => { setOptimisticInList(true); onAddToList(item); } });
+                } else {
+                  setOptimisticInList(true);
+                  onAddToList(item);
+                  showToast(`Added "${item.title}" to My List`);
+                }
+              }}
               className="p-2.5 rounded-full border-2 transition-colors hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
               style={{ background: 'rgba(42,42,42,0.8)', borderColor: 'rgba(255,255,255,0.5)', color: '#fff' }}
               aria-label={inList ? `Remove ${item.title} from My List` : `Add ${item.title} to My List`}

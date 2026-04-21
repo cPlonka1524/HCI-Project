@@ -2,6 +2,7 @@ import { X, Play, Plus, Volume2, VolumeX, ThumbsUp, Check } from 'lucide-react';
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { ImageWithFallback } from './figma/ImageWithFallback';
 import { getVideoForItem, fallbackVideos } from '../utils/videoPool';
+import { useToast } from './Toast';
 import type { ContentItem } from '../types';
 
 interface DetailModalProps {
@@ -10,6 +11,8 @@ interface DetailModalProps {
   onAddToList: (item: ContentItem) => void;
   onRemoveFromList: (itemId: string) => void;
   isInMyList: (itemId: string) => boolean;
+  isLiked: (itemId: string) => boolean;
+  onToggleLike: (item: ContentItem) => void;
   moreLikeThis: ContentItem[];
   onItemClick: (item: ContentItem) => void;
   onPlayClick: (item: ContentItem) => void;
@@ -17,8 +20,10 @@ interface DetailModalProps {
 }
 
 export function DetailModal({
-  item, onClose, onAddToList, onRemoveFromList, isInMyList, moreLikeThis, onItemClick, onPlayClick, autoplayEnabled,
+  item, onClose, onAddToList, onRemoveFromList, isInMyList, isLiked, onToggleLike,
+  moreLikeThis, onItemClick, onPlayClick, autoplayEnabled,
 }: DetailModalProps) {
+  const { showToast } = useToast();
   const [isMuted, setIsMuted] = useState(true);
   const [selectedSeason, setSelectedSeason] = useState(1);
   const [videoError, setVideoError] = useState(false);
@@ -26,6 +31,7 @@ export function DetailModal({
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
+  const recommendationPanelRef = useRef<HTMLDivElement>(null);
 
   const videoUrls = useMemo(() => [
     getVideoForItem(item?.id ?? ''),
@@ -149,7 +155,9 @@ export function DetailModal({
                 }}
                 onError={handleVideoError}
                 aria-label={`Preview video for ${item.title}`}
-              />
+              >
+                <track kind="captions" label="English" srcLang="en" src="/captions/placeholder.vtt" default />
+              </video>
             )}
 
             <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent pointer-events-none" aria-hidden="true" />
@@ -164,6 +172,18 @@ export function DetailModal({
             >
               <X size={22} className="text-white" aria-hidden="true" />
             </button>
+
+            {/* Video unavailable message */}
+            {autoplayEnabled && videoError && (
+              <div
+                className="absolute bottom-4 left-4 z-20 px-3 py-1.5 rounded text-xs"
+                style={{ background: 'rgba(0,0,0,0.75)', color: 'rgba(255,255,255,0.6)', border: '1px solid rgba(255,255,255,0.2)' }}
+                role="status"
+                aria-live="polite"
+              >
+                Preview unavailable — showing cover image
+              </div>
+            )}
 
             {/* Volume */}
             {autoplayEnabled && !videoError && (
@@ -204,7 +224,16 @@ export function DetailModal({
                   Play
                 </button>
                 <button
-                  onClick={e => { e.stopPropagation(); inList ? onRemoveFromList(item.id) : onAddToList(item); }}
+                  onClick={e => {
+                    e.stopPropagation();
+                    if (inList) {
+                      onRemoveFromList(item.id);
+                      showToast(`Removed "${item.title}" from My List`, 'info', { label: 'Undo', onClick: () => onAddToList(item) });
+                    } else {
+                      onAddToList(item);
+                      showToast(`Added "${item.title}" to My List`);
+                    }
+                  }}
                   className="p-2.5 rounded-full border-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
                   style={{ background: 'rgba(42,42,42,0.8)', borderColor: 'rgba(100,100,100,0.6)', color: '#fff' }}
                   aria-label={inList ? `Remove ${item.title} from My List` : `Add ${item.title} to My List`}
@@ -213,14 +242,35 @@ export function DetailModal({
                   {inList ? <Check size={18} aria-hidden="true" /> : <Plus size={18} aria-hidden="true" />}
                 </button>
                 <button
-                  onClick={e => e.stopPropagation()}
+                  onClick={e => {
+                    e.stopPropagation();
+                    onToggleLike(item);
+                    showToast(isLiked(item.id) ? `Removed like from "${item.title}"` : `You liked "${item.title}"`, 'success');
+                  }}
                   className="p-2.5 rounded-full border-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
-                  style={{ background: 'rgba(42,42,42,0.8)', borderColor: 'rgba(100,100,100,0.6)', color: '#fff' }}
-                  aria-label={`Like ${item.title}`}
+                  style={{
+                    background: isLiked(item.id) ? 'rgba(70,211,105,0.25)' : 'rgba(42,42,42,0.8)',
+                    borderColor: isLiked(item.id) ? '#46d369' : 'rgba(100,100,100,0.6)',
+                    color: isLiked(item.id) ? '#46d369' : '#fff',
+                  }}
+                  aria-label={isLiked(item.id) ? `Unlike ${item.title}` : `Like ${item.title}`}
+                  aria-pressed={isLiked(item.id)}
                 >
                   <ThumbsUp size={18} aria-hidden="true" />
                 </button>
               </div>
+
+              <button
+                onClick={e => {
+                  e.stopPropagation();
+                  recommendationPanelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }}
+                className="mt-3 text-xs font-semibold underline underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white rounded px-1 py-0.5"
+                style={{ color: 'rgba(255,255,255,0.85)' }}
+                aria-label="Jump to recommendation explanation details"
+              >
+                Why this recommendation?
+              </button>
 
               <div className="flex items-center gap-3 text-sm mt-4 flex-wrap" style={{ color: 'rgba(255,255,255,0.8)' }}>
                 {item.rating && (
@@ -368,7 +418,7 @@ export function DetailModal({
                 )}
 
                 {/* Recommendation Transparency */}
-                <div className="mt-2 pt-4 border-t theme-transition" style={{ borderColor: 'var(--border)' }}>
+                <div ref={recommendationPanelRef} className="mt-2 pt-4 border-t theme-transition" style={{ borderColor: 'var(--border)' }}>
                   <h3 className="text-sm font-semibold mb-3 theme-transition" style={{ color: 'var(--text-muted)' }}>
                     Why We Recommend This
                   </h3>

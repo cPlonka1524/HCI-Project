@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Netflix Redesign — Low-Fidelity Prototype</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #fff; font-family: Arial, sans-serif; font-size: 13px; color: #000; padding: 20px; }
+  h1 { font-size: 16px; font-weight: bold; margin-bottom: 4px; }
+  .doc-header { border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 24px; }
+  .doc-header p { font-size: 12px; color: #333; margin-top: 2px; }
+  .screen { border: 1.5px solid #000; margin-bottom: 32px; }
+  .screen-header { background: #e0e0e0; border-bottom: 1.5px solid #000; padding: 6px 10px; font-weight: bold; font-size: 12px; letter-spacing: 0.5px; }
+  .nav-bar { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-bottom: 1.5px solid #000; background: #f5f5f5; }
+  .box { border: 1.5px solid #000; padding: 3px 8px; font-size: 11px; background: #fff; display: inline-block; }
+  .box.dark { background: #000; color: #fff; }
+  .box.shaded { background: #d0d0d0; }
+  .nav-logo { border: 1.5px solid #000; padding: 3px 8px; font-weight: bold; font-size: 13px; background: #fff; }
+  .nav-spacer { flex: 1; }
+  .toggle-row { display: flex; align-items: center; gap: 5px; font-size: 11px; }
+  .toggle { width: 28px; height: 14px; border: 1.5px solid #000; display: inline-flex; align-items: center; justify-content: flex-end; padding: 1px; }
+  .toggle-dot { width: 9px; height: 9px; background: #000; }
+  .hero { display: flex; border-bottom: 1.5px solid #000; min-height: 130px; }
+  .hero-left { flex: 1; padding: 12px; display: flex; flex-direction: column; gap: 7px; }
+  .hero-right { width: 260px; border-left: 1.5px solid #000; background: #e0e0e0; display: flex; align-items: center; justify-content: center; font-size: 11px; color: #555; position: relative; }
+  .hero-right svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .hero-right span { position: relative; z-index: 1; font-size: 11px; text-align: center; }
+  .label-small { font-size: 10px; color: #555; text-transform: uppercase; letter-spacing: 1px; }
+  .title-big { font-size: 20px; font-weight: bold; }
+  .reason-tag { border: 1.5px dashed #000; padding: 2px 8px; font-size: 11px; width: fit-content; }
+  .btn-row { display: flex; gap: 8px; }
+  .filter-bar { display: flex; align-items: center; gap: 6px; padding: 8px 10px; border-bottom: 1.5px solid #000; flex-wrap: wrap; background: #fafafa; }
+  .chip { border: 1.5px solid #000; padding: 2px 8px; font-size: 11px; background: #fff; }
+  .chip.active { background: #000; color: #fff; }
+  select.sketch { border: 1.5px solid #000; padding: 2px 6px; font-size: 11px; background: #fff; font-family: Arial, sans-serif; margin-left: auto; }
+  .section { padding: 10px; }
+  .section + .section { border-top: 1px dashed #aaa; }
+  .section-title { font-weight: bold; font-size: 12px; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+  .tag { border: 1px solid #aaa; padding: 1px 5px; font-size: 9px; font-weight: normal; color: #555; letter-spacing: 0.5px; text-transform: uppercase; }
+  .section-note { font-size: 10px; color: #555; margin-left: auto; font-style: italic; }
+  .card-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; }
+  .card { border: 1.5px solid #000; background: #fff; }
+  .card-thumb { width: 100%; aspect-ratio: 16/9; background: #d0d0d0; position: relative; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+  .card-thumb svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .card-thumb span { position: relative; z-index: 1; font-size: 11px; font-weight: bold; color: #777; }
+  .card-body { padding: 3px 4px 4px; }
+  .card-name { font-size: 10px; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .card-meta { font-size: 9px; color: #555; }
+  .card-reason { font-size: 9px; color: #333; border-top: 1px dashed #aaa; margin-top: 2px; padding-top: 2px; font-style: italic; }
+  .card-badge { position: absolute; top: 2px; left: 2px; background: #000; color: #fff; font-size: 7px; padding: 1px 3px; z-index: 2; }
+  .continue-row { display: flex; gap: 8px; }
+  .continue-card { width: 170px; flex-shrink: 0; border: 1.5px solid #000; background: #fff; }
+  .continue-thumb { width: 100%; height: 80px; background: #d0d0d0; position: relative; display: flex; align-items: center; justify-content: center; font-size: 11px; color: #777; overflow: hidden; }
+  .continue-thumb svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .continue-thumb span { position: relative; z-index: 1; }
+  .progress-bar { position: absolute; bottom: 0; left: 0; right: 0; height: 4px; background: #bbb; border-top: 1px solid #999; }
+  .progress-fill { height: 100%; background: #000; }
+  .continue-body { padding: 4px 5px; }
+  .modal-overlay { background: #e8e8e8; border: 1px dashed #aaa; margin: 10px; padding: 6px; font-size: 11px; color: #555; text-align: center; }
+  .modal-box { border: 2px solid #000; margin: 10px; background: #fff; }
+  .modal-header { background: #e0e0e0; border-bottom: 1.5px solid #000; padding: 6px 10px; font-weight: bold; font-size: 13px; display: flex; justify-content: space-between; align-items: center; }
+  .modal-close { border: 1.5px solid #000; padding: 1px 6px; font-size: 11px; background: #fff; }
+  .setting-row { display: flex; align-items: center; justify-content: space-between; padding: 8px 10px; border-bottom: 1px solid #ddd; font-size: 12px; }
+  .setting-row:last-child { border-bottom: none; }
+  .setting-label { font-weight: bold; }
+  .setting-desc { font-size: 10px; color: #555; margin-top: 1px; }
+  .hover-compare { display: flex; gap: 0; padding: 10px; align-items: flex-start; }
+  .hover-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+  .hover-label { font-size: 10px; color: #555; font-style: italic; text-align: center; border-bottom: 1px solid #ddd; width: 100%; padding-bottom: 4px; margin-bottom: 4px; }
+  .arrow-col { width: 40px; display: flex; align-items: center; justify-content: center; padding-top: 60px; font-size: 18px; color: #aaa; }
+  .card-hover-active { border: 2px solid #000; box-shadow: 2px 2px 0 #000; }
+  .card-hover-active .card-thumb { background: #555; }
+  .play-overlay { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.25); z-index: 2; }
+  .play-circle { width: 24px; height: 24px; border: 2px solid #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; color: #fff; }
+  .flow { display: flex; align-items: center; gap: 4px; padding: 12px 10px; flex-wrap: wrap; }
+  .flow-box { border: 1.5px solid #000; padding: 5px 10px; font-size: 11px; background: #fff; text-align: center; }
+  .flow-diamond { border: 1.5px solid #000; padding: 5px 8px; font-size: 10px; background: #e0e0e0; font-style: italic; transform: skewX(-6deg); }
+  .flow-arr { font-size: 14px; color: #555; }
+  .notes { background: #f5f5f5; border-top: 1.5px solid #000; padding: 8px 10px; }
+  .notes-title { font-weight: bold; font-size: 11px; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .note { font-size: 11px; color: #333; padding: 1px 0; }
+  .note::before { content: '- '; }
+  .annotation { font-size: 10px; color: #333; font-style: italic; padding: 2px 10px; background: #fff; border-bottom: 1px dashed #ccc; }
+</style>
+</head>
+<body>
+
+<div class="doc-header">
+  <h1>Netflix Redesign — Low-Fidelity Prototype</h1>
+  <p>CEN 4721 — Human-Computer Interaction &nbsp;|&nbsp; Group Project</p>
+  <p>Covers: Navigation Flow · Home Screen · Settings Modal · Filtered View · Card Hover States</p>
+</div>
+
+<!-- SCREEN 0 — NAVIGATION FLOW -->
+<div class="screen">
+  <div class="screen-header">SCREEN 0 — Navigation Flow</div>
+  <div class="flow">
+    <div class="flow-box" style="border-width:2px;">Home Screen</div>
+    <div class="flow-arr">→</div>
+    <div class="flow-box">Select Genre Filter</div>
+    <div class="flow-arr">→</div>
+    <div class="flow-box">Grid Updates</div>
+    <div class="flow-arr">→</div>
+    <div class="flow-box">Hover Card</div>
+    <div class="flow-arr">→</div>
+    <div class="flow-diamond">Autoplay ON?</div>
+    <div class="flow-arr">→</div>
+    <div class="flow-box">Video Preview</div>
+    <div class="flow-arr">→</div>
+    <div class="flow-box">Click Title</div>
+    <div class="flow-arr">→</div>
+    <div class="flow-box" style="border-width:2px;background:#e0e0e0;">Play Screen</div>
+  </div>
+  <div class="notes">
+    <div class="notes-title">Notes</div>
+    <div class="note">User never leaves the main screen to apply a genre filter — chips update the grid in place</div>
+    <div class="note">Autoplay toggle in nav bar controls whether video preview fires on hover</div>
+    <div class="note">Each card shows a recommendation reason label at all times</div>
+  </div>
+</div>
+
+<!-- SCREEN 1 — HOME SCREEN -->
+<div class="screen">
+  <div class="screen-header">SCREEN 1 — Home Screen</div>
+  <div class="nav-bar">
+    <div class="nav-logo">NETFLIX</div>
+    <div class="box">Home</div>
+    <div class="box shaded">Movies</div>
+    <div class="box shaded">Series</div>
+    <div class="box shaded">My List</div>
+    <div class="nav-spacer"></div>
+    <div class="toggle-row">Autoplay <div class="toggle"><div class="toggle-dot"></div></div></div>
+    <div class="box">[ Avatar ]</div>
+  </div>
+  <div class="annotation">Redesign: autoplay toggle visible in nav bar (not buried in settings)</div>
+  <div class="hero">
+    <div class="hero-left">
+      <div class="label-small">Featured Today</div>
+      <div class="title-big">Dark Horizon</div>
+      <div class="reason-tag">Because you watched Sci-Fi Thrillers</div>
+      <div style="font-size:10px;color:#555;font-style:italic;">Redesign: recommendation reason shown on hero banner</div>
+      <div class="btn-row">
+        <div class="box dark">▶ Play</div>
+        <div class="box">+ My List</div>
+      </div>
+    </div>
+    <div class="hero-right">
+      <svg viewBox="0 0 260 130"><line x1="0" y1="0" x2="260" y2="130" stroke="#999" stroke-width="1.5"/><line x1="260" y1="0" x2="0" y2="130" stroke="#999" stroke-width="1.5"/></svg>
+      <span>Featured Video<br>[autoplay preview]</span>
+    </div>
+  </div>
+  <div class="filter-bar">
+    <span style="font-size:11px;">Filter:</span>
+    <div class="chip active">All</div>
+    <div class="chip">Action</div>
+    <div class="chip">Sci-Fi</div>
+    <div class="chip">Drama</div>
+    <div class="chip">Thriller</div>
+    <div class="chip">Comedy</div>
+    <select class="sketch"><option>Sort: Recommended</option><option>Newest First</option><option>Top Rated</option></select>
+  </div>
+  <div class="annotation">Redesign: genre filter chips and sort dropdown replace 15+ scrollable rows</div>
+  <div class="section">
+    <div class="section-title">Continue Watching <span class="tag">In Progress</span></div>
+    <div class="continue-row">
+      <div class="continue-card">
+        <div class="continue-thumb"><svg viewBox="0 0 170 80"><line x1="0" y1="0" x2="170" y2="80" stroke="#999" stroke-width="1"/><line x1="170" y1="0" x2="0" y2="80" stroke="#999" stroke-width="1"/></svg><span>ECHOES</span><div class="progress-bar"><div class="progress-fill" style="width:62%"></div></div></div>
+        <div class="continue-body"><div class="card-name">Echoes of Mars</div><div class="card-meta">S2 E4 · 62% watched</div></div>
+      </div>
+      <div class="continue-card">
+        <div class="continue-thumb"><svg viewBox="0 0 170 80"><line x1="0" y1="0" x2="170" y2="80" stroke="#999" stroke-width="1"/><line x1="170" y1="0" x2="0" y2="80" stroke="#999" stroke-width="1"/></svg><span>SIGNAL</span><div class="progress-bar"><div class="progress-fill" style="width:28%"></div></div></div>
+        <div class="continue-body"><div class="card-name">The Last Signal</div><div class="card-meta">E2 · 28% watched</div></div>
+      </div>
+      <div class="continue-card">
+        <div class="continue-thumb"><svg viewBox="0 0 170 80"><line x1="0" y1="0" x2="170" y2="80" stroke="#999" stroke-width="1"/><line x1="170" y1="0" x2="0" y2="80" stroke="#999" stroke-width="1"/></svg><span>FRACTURE</span><div class="progress-bar"><div class="progress-fill" style="width:85%"></div></div></div>
+        <div class="continue-body"><div class="card-name">Fracture Lines</div><div class="card-meta">Film · 85% watched</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="section">
+    <div class="section-title">Recommended For You <span class="tag">Personalised</span> <span class="section-note">Based on Action · Sci-Fi history</span></div>
+    <div class="card-grid">
+      <div class="card"><div class="card-thumb"><svg viewBox="0 0 100 56"><line x1="0" y1="0" x2="100" y2="56" stroke="#999" stroke-width="1"/><line x1="100" y1="0" x2="0" y2="56" stroke="#999" stroke-width="1"/></svg><span>NB</span><div class="card-badge">94%</div></div><div class="card-body"><div class="card-name">Neon Blade</div><div class="card-meta">2024 · Action</div><div class="card-reason">Because you watched Action</div></div></div>
+      <div class="card"><div class="card-thumb"><svg viewBox="0 0 100 56"><line x1="0" y1="0" x2="100" y2="56" stroke="#999" stroke-width="1"/><line x1="100" y1="0" x2="0" y2="56" stroke="#999" stroke-width="1"/></svg><span>VP</span></div><div class="card-body"><div class="card-name">Void Protocol</div><div class="card-meta">2023 · Sci-Fi</div><div class="card-reason">Because you watched Sci-Fi</div></div></div>
+      <div class="card"><div class="card-thumb"><svg viewBox="0 0 100 56"><line x1="0" y1="0" x2="100" y2="56" stroke="#999" stroke-width="1"/><line x1="100" y1="0" x2="0" y2="56" stroke="#999" stroke-width="1"/></svg><span>KM</span></div><div class="card-body"><div class="card-name">Kingmaker</div><div class="card-meta">2024 · Thriller</div><div class="card-reason">Because you watched Thrillers</div></div></div>
+      <div class="card"><div class="card-thumb"><svg viewBox="0 0 100 56"><line x1="0" y1="0" x2="100" y2="56" stroke="#999" stroke-width="1"/><line x1="100" y1="0" x2="0" y2="56" stroke="#999" stroke-width="1"/></svg><span>EC</span></div><div class="card-body"><div class="card-name">Echo Chamber</div><div class="card-meta">2024 · Drama</div><div class="card-reason">Because you watched Drama</div></div></div>
+      <div class="card"><div class="card-thumb"><svg viewBox="0 0 100 56"><line x1="0" y1="0" x2="100" y2="56" stroke="#999" stroke-width="1"/><line x1="100" y1="0" x2="0" y2="56" stroke="#999" stroke-width="1"/></svg><span>IM</span></div><div class="card-body"><div class="card-name">Iron Meridian</div><div class="card-meta">2025 · Action</div><div class="card-reason">Because you watched Action</div></div></div>
+      <div class="card"><div class="card-thumb"><svg viewBox="0 0 100 56"><line x1="0" y1="0" x2="100" y2="56" stroke="#999" stroke-width="1"/><line x1="100" y1="0" x2="0" y2="56" stroke="#999" stroke-width="1"/></svg><span>PF</span></div><div class="card-body"><div class="card-name">Pale Fire</div><div class="card-meta">2023 · Sci-Fi</div><div class="card-reason">Because you watched Sci-Fi</div></div></div>
+    </div>
+    <div style="font-size:10px;color:#555;font-style:italic;margin-top:4px;">Redesign: reason label under each card | each title appears in one section only (no duplication)</div>
+  </div>
+  <div class="section">
+    <div class="section-title">Trending Now <span class="tag">Popular</span> <span class="section-note">Trending among similar users</span></div>
+    <div class="card-grid">
+      <div class="card"><div class="card-thumb"><svg viewBox="0 0 100 56"><line x1="0" y1="0" x2="100" y2="56" stroke="#999" stroke-width="1"/><line x1="100" y1="0" x2="0" y2="56" stroke="#999" stroke-width="1"/></svg><span>CT</span></div><div class="card-body"><div class="card-name">Crash Theory</div><div class="card-meta">2025 · Thriller</div><div class="card-reason">Trending in your region</div></div></div>
+      <div class="card"><div class="card-thumb"><svg viewBox="0 0 100 56"><line x1="0" y1="0" x2="100" y2="56" stroke="#999" stroke-width="1"/><line x1="100" y1="0" x2="0" y2="56" stroke="#999" stroke-width="1"/></svg><span>DC</span></div><div class="card-body"><div class="card-name">The Deep Cut</div><div class="card-meta">2025 · Drama</div><div class="card-reason">Trending among Drama fans</div></div></div>
+      <div class="card"><div class="card-thumb"><svg viewBox="0 0 100 56"><line x1="0" y1="0" x2="100" y2="56" stroke="#999" stroke-width="1"/><line x1="100" y1="0" x2="0" y2="56" stroke="#999" stroke-width="1"/></svg><span>SC</span></div><div class="card-body"><div class="card-name">Sunken City</div><div class="card-meta">2024 · Sci-Fi</div><div class="card-reason">Trending globally</div></div></div>
+      <div class="card"><div class="card-thumb"><svg viewBox="0 0 100 56"><line x1="0" y1="0" x2="100" y2="56" stroke="#999" stroke-width="1"/><line x1="100" y1="0" x2="0" y2="56" stroke="#999" stroke-width="1"/></svg><span>RL</span><div class="card-badge">NEW</div></div><div class="card-body"><div class="card-name">Redline</div><div class="card-meta">2025 · Action</div><div class="card-reason">Trending in your region</div></div></div>
+      <div class="card"><div class="card-thumb"><svg viewBox="0 0 100 56"><line x1="0" y1="0" x2="100" y2="56" stroke="#999" stroke-width="1"/><line x1="100" y1="0" x2="0" y2="56" stroke="#999" stroke-width="1"/></svg><span>GC</span></div><div class="card-body"><div class="card-name">Glass Ceiling</div><div class="card-meta">2024 · Drama</div><div class="card-reason">Top 10 this week</div></div></div>
+      <div class="card"><div class="card-thumb"><svg viewBox="0 0 100 56"><line x1="0" y1="0" x2="100" y2="56" stroke="#999" stroke-width="1"/><line x1="100" y1="0" x2="0" y2="56" stroke="#999" stroke-width="1"/></svg><span>PW</span><div class="card-badge">NEW</div></div><div class="card-body"><div class="card-name">Phantom Wire</div><div class="card-meta">2025 · Thriller</div><div class="card-reason">Trending among Thriller fans</div></div></div>
+    </div>
+  </div>
+  <div class="notes">
+    <div class="notes-title">Notes</div>
+    <div class="note">Home screen has 4-5 sections max — no endless rows</div>
+    <div class="note">Every title appears in exactly one section — no duplication across rows</div>
+    <div class="note">Filter bar and sort dropdown reduce scrolling dependency</div>
+  </div>
+</div>
+
+<!-- SCREEN 2 — SETTINGS MODAL -->
+<div class="screen">
+  <div class="screen-header">SCREEN 2 — Settings Modal (overlay on Home Screen)</div>
+  <div class="modal-overlay">[ Home Screen — dimmed in background ]</div>
+  <div class="modal-box">
+    <div class="modal-header">Preferences <div class="modal-close">✕</div></div>
+    <div class="setting-row"><div><div class="setting-label">Autoplay Previews</div><div class="setting-desc">Automatically play previews while browsing</div></div><div class="toggle"><div class="toggle-dot"></div></div></div>
+    <div class="setting-row"><div><div class="setting-label">Recommendation Explanations</div><div class="setting-desc">Show why content is recommended below each title</div></div><div class="toggle"><div class="toggle-dot"></div></div></div>
+    <div class="setting-row"><div><div class="setting-label">Compact Grid View</div><div class="setting-desc">Show more titles at once with smaller cards</div></div><div class="toggle" style="justify-content:flex-start;"><div class="toggle-dot"></div></div></div>
+    <div class="setting-row"><div><div class="setting-label">Content Language</div><div class="setting-desc">Filter content by original language</div></div><select class="sketch"><option>All Languages</option><option>English</option><option>Spanish</option><option>Korean</option></select></div>
+  </div>
+  <div class="notes">
+    <div class="notes-title">Notes</div>
+    <div class="note">Redesign: autoplay toggle also accessible directly in nav bar — not just buried here</div>
+    <div class="note">Recommendation reasons can be toggled off for users who prefer a cleaner view</div>
+    <div class="note">Modal closes on backdrop click or ✕ button</div>
+  </div>
+</div>
+
+<!-- SCREEN 3 — FILTERED STATE -->
+<div class="screen">
+  <div class="screen-header">SCREEN 3 — Home Screen After Genre Filter Applied (Action selected)</div>
+  <div class="nav-bar">
+    <div class="nav-logo">NETFLIX</div>
+    <div class="box">Home</div>
+    <div class="box shaded">Movies</div>
+    <div class="box shaded">Series</div>
+    <div class="box shaded">My List</div>
+    <div class="nav-spacer"></div>
+    <div class="toggle-row">Autoplay <div class="toggle"><div class="toggle-dot"></div></div></div>
+  </div>
+  <div class="filter-bar">
+    <span style="font-size:11px;">Filter:</span>
+    <div class="chip">All</div>
+    <div class="chip active">Action</div>
+    <div class="chip">Sci-Fi</div>
+    <div class="chip">Drama</div>
+    <div class="chip">Thriller</div>
+    <div class="chip">Comedy</div>
+    <select class="sketch"><option>Sort: Top Rated</option></select>
+  </div>
+  <div style="padding:6px 10px;background:#e0e0e0;border-bottom:1px solid #bbb;font-size:11px;">
+    Showing: Action only — 24 titles found. All sections updated simultaneously.
+  </div>
+  <div class="section">
+    <div class="section-title">Recommended · Action <span class="tag">Filtered</span></div>
+    <div class="card-grid">
+      <div class="card"><div class="card-thumb"><svg viewBox="0 0 100 56"><line x1="0" y1="0" x2="100" y2="56" stroke="#999" stroke-width="1"/><line x1="100" y1="0" x2="0" y2="56" stroke="#999" stroke-width="1"/></svg><span>NB</span></div><div class="card-body"><div class="card-name">Neon Blade</div><div class="card-meta">Action</div><div class="card-reason">Because you watched Action</div></div></div>
+      <div class="card"><div class="card-thumb"><svg viewBox="0 0 100 56"><line x1="0" y1="0" x2="100" y2="56" stroke="#999" stroke-width="1"/><line x1="100" y1="0" x2="0" y2="56" stroke="#999" stroke-width="1"/></svg><span>IM</span></div><div class="card-body"><div class="card-name">Iron Meridian</div><div class="card-meta">Action</div><div class="card-reason">Because you watched Action</div></div></div>
+      <div class="card"><div class="card-thumb"><svg viewBox="0 0 100 56"><line x1="0" y1="0" x2="100" y2="56" stroke="#999" stroke-width="1"/><line x1="100" y1="0" x2="0" y2="56" stroke="#999" stroke-width="1"/></svg><span>RL</span></div><div class="card-body"><div class="card-name">Redline</div><div class="card-meta">Action</div><div class="card-reason">Trending in your region</div></div></div>
+      <div class="card"><div class="card-thumb"><svg viewBox="0 0 100 56"><line x1="0" y1="0" x2="100" y2="56" stroke="#999" stroke-width="1"/><line x1="100" y1="0" x2="0" y2="56" stroke="#999" stroke-width="1"/></svg><span>QS</span></div><div class="card-body"><div class="card-name">Quick Shift</div><div class="card-meta">Action</div><div class="card-reason">Because you watched Action</div></div></div>
+      <div class="card"><div class="card-thumb"><svg viewBox="0 0 100 56"><line x1="0" y1="0" x2="100" y2="56" stroke="#999" stroke-width="1"/><line x1="100" y1="0" x2="0" y2="56" stroke="#999" stroke-width="1"/></svg><span>WN</span></div><div class="card-body"><div class="card-name">Wired Nerve</div><div class="card-meta">Action</div><div class="card-reason">Trending in your region</div></div></div>
+      <div class="card"><div class="card-thumb"><svg viewBox="0 0 100 56"><line x1="0" y1="0" x2="100" y2="56" stroke="#999" stroke-width="1"/><line x1="100" y1="0" x2="0" y2="56" stroke="#999" stroke-width="1"/></svg><span>KM</span></div><div class="card-body"><div class="card-name">Kingmaker</div><div class="card-meta">Action</div><div class="card-reason">Because you watched Action</div></div></div>
+    </div>
+  </div>
+  <div class="notes">
+    <div class="notes-title">Notes</div>
+    <div class="note">Clicking a genre chip filters all sections at once — no page reload</div>
+    <div class="note">Result count shown in banner to confirm filter is active</div>
+    <div class="note">Redesign eliminates need to scroll 15+ rows to find a specific genre</div>
+  </div>
+</div>
+
+<!-- SCREEN 4 — CARD HOVER STATES -->
+<div class="screen">
+  <div class="screen-header">SCREEN 4 — Card Hover States</div>
+  <div class="hover-compare">
+    <div class="hover-col">
+      <div class="hover-label">Default State</div>
+      <div class="card" style="width:160px;">
+        <div class="card-thumb"><svg viewBox="0 0 100 56"><line x1="0" y1="0" x2="100" y2="56" stroke="#999" stroke-width="1"/><line x1="100" y1="0" x2="0" y2="56" stroke="#999" stroke-width="1"/></svg><span>NB</span></div>
+        <div class="card-body"><div class="card-name">Neon Blade</div><div class="card-meta">2024 · Action · ⭐ 8.7</div><div class="card-reason">Because you watched Action</div></div>
+      </div>
+    </div>
+    <div class="arrow-col">→</div>
+    <div class="hover-col">
+      <div class="hover-label">Hover — Autoplay ON</div>
+      <div class="card card-hover-active" style="width:160px;">
+        <div class="card-thumb" style="background:#555;">
+          <svg viewBox="0 0 100 56"><line x1="0" y1="0" x2="100" y2="56" stroke="#fff" stroke-width="1" opacity="0.2"/><line x1="100" y1="0" x2="0" y2="56" stroke="#fff" stroke-width="1" opacity="0.2"/></svg>
+          <span style="color:#ccc;">NB</span>
+          <div class="play-overlay"><div class="play-circle">▶</div></div>
+          <div style="position:absolute;bottom:3px;left:3px;font-size:8px;color:#ccc;background:rgba(0,0,0,0.5);padding:1px 3px;">▶ preview playing</div>
+        </div>
+        <div class="card-body"><div class="card-name">Neon Blade</div><div class="card-meta">2024 · Action · ⭐ 8.7</div><div class="card-reason">Because you watched Action</div></div>
+      </div>
+    </div>
+    <div class="arrow-col">→</div>
+    <div class="hover-col">
+      <div class="hover-label">Hover — Autoplay OFF</div>
+      <div class="card card-hover-active" style="width:160px;">
+        <div class="card-thumb">
+          <svg viewBox="0 0 100 56"><line x1="0" y1="0" x2="100" y2="56" stroke="#999" stroke-width="1"/><line x1="100" y1="0" x2="0" y2="56" stroke="#999" stroke-width="1"/></svg>
+          <span>NB</span>
+          <div class="play-overlay" style="background:rgba(0,0,0,0.15);"><div class="play-circle" style="border-color:#000;color:#000;">▶</div></div>
+        </div>
+        <div class="card-body"><div class="card-name">Neon Blade</div><div class="card-meta">2024 · Action · ⭐ 8.7</div><div class="card-reason">Because you watched Action</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="notes">
+    <div class="notes-title">Notes</div>
+    <div class="note">Autoplay ON: card scales up, video clip plays, play button overlays on thumbnail</div>
+    <div class="note">Autoplay OFF: card scales up and shows play button — no video fires</div>
+    <div class="note">Reason label always visible regardless of autoplay state</div>
+    <div class="note">User controls autoplay via toggle in nav bar — no need to visit settings</div>
+  </div>
+</div>
+
+<div style="text-align:center;padding:14px;font-size:11px;color:#aaa;border-top:1px solid #ddd;margin-top:8px;">
+  Low-Fidelity Prototype — CEN 4721 Human-Computer Interaction — Netflix Redesign
+</div>
+
+</body>
+</html>
