@@ -8,10 +8,10 @@ interface KeyboardHelpProps {
 const SHORTCUTS = [
   { keys: ['Space', 'K'], description: 'Play / Pause (in player)' },
   { keys: ['M'], description: 'Mute / Unmute (in player)' },
-  { keys: ['Ctrl+K'], description: 'Open search' },
+  { keys: ['Ctrl+K', 'Cmd+K'], description: 'Open search' },
   { keys: ['Ctrl+Backspace', 'Cmd+Backspace'], description: 'Clear active search results' },
   { keys: ['Esc'], description: 'Close modal or exit player' },
-  { keys: ['?'], description: 'Show / hide this help panel' },
+  { keys: ['Shift+/'], description: 'Show / hide this help panel' },
   { keys: ['Tab'], description: 'Navigate between elements' },
   { keys: ['Enter'], description: 'Activate focused element' },
 ];
@@ -88,7 +88,7 @@ export function KeyboardHelp({ onClose }: KeyboardHelpProps) {
         </ul>
 
         <p className="mt-5 text-xs text-center" style={{ color: 'var(--text-muted)' }}>
-          Press <kbd className="px-1.5 py-0.5 rounded font-mono" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>?</kbd> anywhere to toggle this panel
+          Press <kbd className="px-1.5 py-0.5 rounded font-mono" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>Shift+/</kbd> anywhere to toggle this panel
         </p>
       </div>
     </div>
