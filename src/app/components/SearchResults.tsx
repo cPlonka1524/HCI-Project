@@ -1,3 +1,8 @@
+// This code implements the display of search results after a user puts in a query.
+// Any movies are shows that has an attribute matching the search query is displayed,
+// as well as displaying a message prompting the user to edit their search if there
+// are not items with the matching attribute.
+
 import { Search } from 'lucide-react';
 import { ContentCard } from './ContentCard';
 import type { ContentItem } from '../types';
