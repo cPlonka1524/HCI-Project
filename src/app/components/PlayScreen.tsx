@@ -1,3 +1,8 @@
+// This section of code implements user interactions while watching a show or movie.
+// Necessary functions like playing, pausing, to full screen, etc, are available,
+// as well as display functions in order for the user to see the progress either in
+// loading a film, how long the user was watching, and if any errors occur.
+
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { X, Play, Pause, Volume2, VolumeX, SkipForward, Maximize, Minimize, Loader } from 'lucide-react';
 import { getVideoForItem, fallbackVideos } from '../utils/videoPool';
