@@ -1,3 +1,8 @@
+// This code implements the toast/pop-up notification system. When the user commits
+// certain actions, such as adding a movie to their favorites list or giving a show
+// a positive recommendation, a small notification box will pop up in the corner,
+// alerting the user of the action before disappearing after a few seconds.
+
 import { createContext, useContext, useState, useCallback, useRef } from 'react';
 import { CheckCircle, Info, AlertCircle, X } from 'lucide-react';
 
@@ -12,11 +17,11 @@ interface ToastItem {
   message: string;
   type: ToastType;
   action?: ToastAction;
-}
+} 
 
 interface ToastContextValue {
   showToast: (message: string, type?: ToastType, action?: ToastAction) => void;
-}
+} 
 
 // ── Context ──────────────────────────────────────────────────────────────────
 
@@ -65,7 +70,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
 }
 
 // ── Toast Card ────────────────────────────────────────────────────────────────
-
+// 
 function ToastCard({ toast, onDismiss }: { toast: ToastItem; onDismiss: (id: string) => void }) {
   const iconMap = {
     success: <CheckCircle size={16} className="text-green-400 flex-shrink-0" aria-hidden="true" />,
