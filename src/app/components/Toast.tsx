@@ -1,3 +1,8 @@
+// This code implements the toast/pop-up notification system. When the user commits
+// certain actions, such as adding a movie to their favorites list or giving a show
+// a positive recommendation, a small notification box will pop up in the corner,
+// alerting the user of the action before disappearing after a few seconds.
+
 import { createContext, useContext, useState, useCallback, useRef } from 'react';
 import { CheckCircle, Info, AlertCircle, X } from 'lucide-react';
 
